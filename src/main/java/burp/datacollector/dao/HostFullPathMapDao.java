@@ -10,7 +10,7 @@ import java.util.HashSet;
 
 public class HostFullPathMapDao extends BaseDao {
 
-    public final static String FULL_PATH_IMPORT_FILE = "/full_path_import.txt";
+    public final static String FULL_PATH_IMPORT_FILE = "/full_path_import.csv";
     public final static String FULL_PATH_FILE = "/full_path.txt";
 
     public void insertIgnoreHostFullPath(String host, HashSet<String> fullPathSet) throws SQLException {

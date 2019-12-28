@@ -10,7 +10,7 @@ import java.util.HashSet;
 
 public class HostParameterMapDao extends BaseDao {
 
-    public final static String PARAMETER_IMPORT_FILE = "/parameter_import.txt";
+    public final static String PARAMETER_IMPORT_FILE = "/parameter_import.csv";
     public final static String PARAMETER_FILE = "/parameter.txt";
 
 

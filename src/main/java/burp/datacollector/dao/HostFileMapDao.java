@@ -10,7 +10,7 @@ import java.util.HashSet;
 
 public class HostFileMapDao extends BaseDao {
 
-    public final static String FILE_IMPORT_FILE = "/file_import.txt";
+    public final static String FILE_IMPORT_FILE = "/file_import.csv";
     public final static String FILE_FILE = "/file.txt";
 
 

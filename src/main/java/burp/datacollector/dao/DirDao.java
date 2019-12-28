@@ -1,54 +1,55 @@
 package burp.datacollector.dao;
 
+import java.io.*;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class DirDao extends BaseDao {
-    public void insertDir(String dir) throws SQLException {
-        String sql = "INSERT INTO dir(dir, count) VALUES (?, 1)";
-        PreparedStatement preparedStatement = getPreparedStatement(sql);
-        preparedStatement.setString(1, dir);
-        preparedStatement.execute();
-        preparedStatement.close();
-    }
 
-    public boolean dirNotExist(String dir) throws SQLException {
-        boolean result = true;
-        String sql = "SELECT dir FROM dir WHERE dir = ?";
-        PreparedStatement preparedStatement = getPreparedStatement(sql);
-        preparedStatement.setString(1, dir);
-        ResultSet resultSet = preparedStatement.executeQuery();
-        if (resultSet.next()) {
-            result = false;
+    public void importDirFromFile(String fileName) throws IOException, SQLException {
+
+        File lineFile = new File(fileName);
+        LineNumberReader lineNumberReader = new LineNumberReader(new FileReader(lineFile));
+        long fileLength = lineFile.length();
+        lineNumberReader.skip(fileLength);
+        int lineLength = lineNumberReader.getLineNumber();
+        lineNumberReader.close();
+        if (lineLength < 2)
+            return;
+
+        StringBuilder sqlStringBuilder = new StringBuilder("INSERT INTO `dir` (`dir`, `count`) VALUES");
+        int n = lineLength - 1;
+        for (int i = 0; i < n - 1; i++) {
+            sqlStringBuilder.append("(?, ?),");
         }
-        resultSet.close();
-        preparedStatement.close();
-        return result;
-    }
-
-    public void addDirCount(String dir, int count) throws SQLException {
-        String sql = "UPDATE dir SET count = count + ? WHERE dir = ?";
+        sqlStringBuilder.append("(?, ?) ON DUPLICATE KEY UPDATE count = count + VALUES (count)");
+        String sql = sqlStringBuilder.toString();
         PreparedStatement preparedStatement = getPreparedStatement(sql);
-        preparedStatement.setInt(1, count);
-        preparedStatement.setString(2, dir);
-        preparedStatement.execute();
-        preparedStatement.close();
-    }
 
-    public List<String> getAllDir() throws SQLException {
-        List<String> dirs = new ArrayList<>();
-        String sql = "SELECT dir FROM dir ORDER BY count DESC";
-        PreparedStatement preparedStatement = getPreparedStatement(sql);
-        ResultSet resultSet = preparedStatement.executeQuery();
-        while (resultSet.next()) {
-            String dir = resultSet.getString("dir");
-            dirs.add(dir);
+        FileReader fileReader = new FileReader(new File(fileName));
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        String line = bufferedReader.readLine();
+        if (line != null) {
+            String head = line.split(",")[0].trim();
+            if (head.equals("dir")) {
+                int length = 1;
+                int index = 1;
+                int countIndex = 2;
+                while ((line = bufferedReader.readLine()) != null) {
+                    String[] row = line.split(",");
+                    String file = row[0];
+                    int count = Integer.parseInt(row[1]);
+                    preparedStatement.setString(index, file);
+                    preparedStatement.setInt(countIndex, count);
+                    length += 2;
+                    index = length;
+                    countIndex = index + 1;
+                }
+                preparedStatement.executeUpdate();
+                preparedStatement.close();
+            }
         }
-        resultSet.close();
-        preparedStatement.close();
-        return dirs;
+        bufferedReader.close();
     }
+
 }

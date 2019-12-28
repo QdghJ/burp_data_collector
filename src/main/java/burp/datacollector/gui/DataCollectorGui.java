@@ -6,12 +6,13 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -36,6 +37,10 @@ public class DataCollectorGui {
     public final static String MYSQL_USER = "mysqlUser";
     public final static String MYSQL_PASSWORD = "mysqlPassword";
     public final static String BLACK_LIST_EXT = "black_list_ext";
+
+    public final static String[] IMPORT_HEADS = new String[]{
+            "full_path", "path", "file", "dir", "parameter"
+    };
 
     public DataCollectorGui(BurpExtender burpExtender) {
 
@@ -81,58 +86,121 @@ public class DataCollectorGui {
             public void actionPerformed(ActionEvent e) {
                 JFileChooser fileChooser = new JFileChooser();
                 fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                fileChooser.showDialog(new JLabel(), "select folder to export data");
-                File dataDir = fileChooser.getSelectedFile();
-                String absolutePath = dataDir.getAbsolutePath();
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            HostDirMapDao hostDirMapDao = new HostDirMapDao();
-                            hostDirMapDao.exportDir(absolutePath);
-                            appendOutput("dir export to  " + absolutePath + HostDirMapDao.DIR_FILE);
-                            appendOutput("dir import file export to  " + absolutePath + HostDirMapDao.DIR_IMPORT_FILE);
+                int selected = fileChooser.showDialog(new JLabel(), "select folder to export data");
+                if (selected == JFileChooser.APPROVE_OPTION) {
+                    File dataDir = fileChooser.getSelectedFile();
+                    String absolutePath = dataDir.getAbsolutePath();
 
-                            HostFullPathMapDao hostFullPathMapDao = new HostFullPathMapDao();
-                            hostFullPathMapDao.exportFullPath(absolutePath);
-                            appendOutput("full path export to  " + absolutePath + HostFullPathMapDao.FULL_PATH_FILE);
-                            appendOutput("full path import file export to  " + absolutePath + HostFullPathMapDao.FULL_PATH_IMPORT_FILE);
+                    try {
+                        HostDirMapDao hostDirMapDao = new HostDirMapDao();
+                        hostDirMapDao.exportDir(absolutePath);
+                        appendOutput("dir export to  " + absolutePath + HostDirMapDao.DIR_FILE);
+                        appendOutput("dir import file export to  " + absolutePath + HostDirMapDao.DIR_IMPORT_FILE);
 
-                            HostPathMapDao hostPathMapDao = new HostPathMapDao();
-                            hostPathMapDao.exportPath(absolutePath);
-                            appendOutput("path export to  " + absolutePath + HostPathMapDao.PATH_FILE);
-                            appendOutput("path import file export to  " + absolutePath + HostPathMapDao.PATH_IMPORT_FILE);
+                        HostFullPathMapDao hostFullPathMapDao = new HostFullPathMapDao();
+                        hostFullPathMapDao.exportFullPath(absolutePath);
+                        appendOutput("full path export to  " + absolutePath + HostFullPathMapDao.FULL_PATH_FILE);
+                        appendOutput("full path import file export to  " + absolutePath + HostFullPathMapDao.FULL_PATH_IMPORT_FILE);
 
-                            HostFileMapDao hostFileMapDao = new HostFileMapDao();
-                            hostFileMapDao.exportFile(absolutePath);
-                            appendOutput("file export to  " + absolutePath + HostFileMapDao.FILE_FILE);
-                            appendOutput("file import file export to  " + absolutePath + HostFileMapDao.FILE_IMPORT_FILE);
+                        HostPathMapDao hostPathMapDao = new HostPathMapDao();
+                        hostPathMapDao.exportPath(absolutePath);
+                        appendOutput("path export to  " + absolutePath + HostPathMapDao.PATH_FILE);
+                        appendOutput("path import file export to  " + absolutePath + HostPathMapDao.PATH_IMPORT_FILE);
 
-                            HostParameterMapDao hostParameterMapDao = new HostParameterMapDao();
-                            hostParameterMapDao.exportParameter(absolutePath);
-                            appendOutput("parameter export to  " + absolutePath + HostParameterMapDao.PARAMETER_FILE);
-                            appendOutput("parameter import file export to  " + absolutePath + HostParameterMapDao.PARAMETER_IMPORT_FILE);
+                        HostFileMapDao hostFileMapDao = new HostFileMapDao();
+                        hostFileMapDao.exportFile(absolutePath);
+                        appendOutput("file export to  " + absolutePath + HostFileMapDao.FILE_FILE);
+                        appendOutput("file import file export to  " + absolutePath + HostFileMapDao.FILE_IMPORT_FILE);
 
-                            AllDao allDao = new AllDao();
-                            allDao.exportAll(absolutePath);
-                            appendOutput("all export to  " + absolutePath + "/all.txt");
+                        HostParameterMapDao hostParameterMapDao = new HostParameterMapDao();
+                        hostParameterMapDao.exportParameter(absolutePath);
+                        appendOutput("parameter export to  " + absolutePath + HostParameterMapDao.PARAMETER_FILE);
+                        appendOutput("parameter import file export to  " + absolutePath + HostParameterMapDao.PARAMETER_IMPORT_FILE);
 
-                        } catch (SQLException | IOException ex) {
-                            ex.printStackTrace();
-                            appendOutput(ex.toString());
-                        }
+                        AllDao allDao = new AllDao();
+                        allDao.exportAll(absolutePath);
+                        appendOutput("all export to  " + absolutePath + "/all.txt");
+
+                    } catch (SQLException | IOException ex) {
+                        ex.printStackTrace();
+                        appendOutput(ex.toString());
                     }
-                }).start();
-
+                }
 
             }
+
         });
         importDirtFromFilesButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                fileChooser.setMultiSelectionEnabled(true);
+                int selected = fileChooser.showDialog(new JLabel(), "select files to import data");
+                if (selected == JFileChooser.APPROVE_OPTION) {
+                    File[] files = fileChooser.getSelectedFiles();
+                    for (File file : files) {
+                        String fileName = file.getAbsolutePath();
+                        try {
+                            String head = getFileHead(fileName);
+                            if (checkFileHead(head)) {
+                                switch (head) {
+                                    case BurpExtender.FILE:
+                                        FileDao fileDao = new FileDao();
+                                        fileDao.importFileFromFile(fileName);
+                                        break;
+                                    case BurpExtender.DIR:
+                                        DirDao dirDao = new DirDao();
+                                        dirDao.importDirFromFile(fileName);
+                                        break;
+                                    case BurpExtender.FULL_PATH:
+                                        FullPathDao fullPathDao = new FullPathDao();
+                                        fullPathDao.importFullPathFromFile(fileName);
+                                        break;
+                                    case BurpExtender.PATH:
+                                        PathDao pathDao = new PathDao();
+                                        pathDao.importPathFromFile(fileName);
+                                        break;
+                                    case BurpExtender.PARAMETER:
+                                        ParameterDao parameterDao = new ParameterDao();
+                                        parameterDao.importParameterFromFile(fileName);
+                                        break;
+                                }
+                                appendOutput("import " + fileName + " finish");
+                            } else {
+                                appendOutput("file head error");
+                            }
 
+                        } catch (IOException | SQLException ex) {
+                            ex.printStackTrace();
+                            appendOutput(ex.toString());
+                        }
+                    }
+                }
             }
         });
+    }
+
+    public boolean checkFileHead(String head) {
+        boolean result = false;
+        for (String h : IMPORT_HEADS) {
+            if (h.equals(head))
+                result = true;
+        }
+        return result;
+    }
+
+    public String getFileHead(String fileName) throws IOException {
+        String head = "";
+        FileReader fileReader = new FileReader(new File(fileName));
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        String line = bufferedReader.readLine();
+        if (line != null) {
+            head = line.split(",")[0].trim();
+        }
+        appendOutput("file head: " + head);
+        bufferedReader.close();
+        return head;
     }
 
 
@@ -254,7 +322,7 @@ public class DataCollectorGui {
         clearMessageButton.setText("clear message");
         jPanel.add(clearMessageButton, new GridConstraints(7, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(222, 27), null, 0, false));
         importDirtFromFilesButton = new JButton();
-        importDirtFromFilesButton.setText("import dirt from files");
+        importDirtFromFilesButton.setText("import dict from files");
         jPanel.add(importDirtFromFilesButton, new GridConstraints(7, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     }
 

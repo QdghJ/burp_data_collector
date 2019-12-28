@@ -4,7 +4,6 @@ import burp.datacollector.dao.*;
 import burp.datacollector.gui.DataCollectorGui;
 
 import java.awt.*;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,14 +18,16 @@ import java.util.regex.Pattern;
 public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListener {
 
     private final static String extensionName = "BurpDataCollector";
-    private final static String FULL_PATH = "full_path";
-    private final static String PATH = "path";
-    private final static String FILE = "file";
-    private final static String DIR = "dir";
-    private final static String PARAMETER = "parameter";
+    public final static String FULL_PATH = "full_path";
+    public final static String PATH = "path";
+    public final static String FILE = "file";
+    public final static String DIR = "dir";
+    public final static String PARAMETER = "parameter";
 
     private DataCollectorGui dataCollectorGui;
     private IBurpExtenderCallbacks callbacks;
+
+    private ScheduledExecutorService service;
 
     // memory cache to check repeat
     private HashMap<String, HashMap<String, HashSet<String>>> memoryHostValueMap = new HashMap<>();
@@ -55,12 +56,11 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
             callbacks.printOutput("database connect fail! please check you mysql config !");
         }
 
-        ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+        service = Executors.newSingleThreadScheduledExecutor();
         service.scheduleWithFixedDelay(() -> {
             BurpExtender.this.saveData();
             callbacks.printOutput("Scheduled export execution completed");
         }, 0, 3, TimeUnit.MINUTES);
-
 
         callbacks.printOutput("load BurpDataCollector success !");
     }
@@ -115,6 +115,7 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
     public void extensionUnloaded() {
         saveConfig();
         saveData();
+        service.shutdownNow();
         DatabaseUtil.getInstance().closeConnection();
     }
 

@@ -1,55 +1,55 @@
 package burp.datacollector.dao;
 
+import java.io.*;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ParameterDao extends BaseDao {
 
-    public void insertParameter(String parameter) throws SQLException {
-        String sql = "INSERT INTO parameter(parameter, count) VALUES (?, 1)";
-        PreparedStatement preparedStatement = getPreparedStatement(sql);
-        preparedStatement.setString(1, parameter);
-        preparedStatement.execute();
-        preparedStatement.close();
-    }
+    public void importParameterFromFile(String fileName) throws IOException, SQLException {
 
-    public boolean parameterNotExist(String parameter) throws SQLException {
-        boolean result = true;
-        String sql = "SELECT parameter FROM parameter WHERE parameter = ?";
-        PreparedStatement preparedStatement = getPreparedStatement(sql);
-        preparedStatement.setString(1, parameter);
-        ResultSet resultSet = preparedStatement.executeQuery();
-        if (resultSet.next()) {
-            result = false;
+        File lineFile = new File(fileName);
+        LineNumberReader lineNumberReader = new LineNumberReader(new FileReader(lineFile));
+        long fileLength = lineFile.length();
+        lineNumberReader.skip(fileLength);
+        int lineLength = lineNumberReader.getLineNumber();
+        lineNumberReader.close();
+        if (lineLength < 2)
+            return;
+
+        StringBuilder sqlStringBuilder = new StringBuilder("INSERT INTO `parameter` (`parameter`, `count`) VALUES");
+        int n = lineLength - 1;
+        for (int i = 0; i < n - 1; i++) {
+            sqlStringBuilder.append("(?, ?),");
         }
-        resultSet.close();
-        preparedStatement.close();
-        return result;
-    }
-
-    public void addParameterCount(String parameter, int count) throws SQLException {
-        String sql = "UPDATE parameter SET count = count + ? WHERE parameter = ?";
+        sqlStringBuilder.append("(?, ?) ON DUPLICATE KEY UPDATE count = count + VALUES (count)");
+        String sql = sqlStringBuilder.toString();
         PreparedStatement preparedStatement = getPreparedStatement(sql);
-        preparedStatement.setInt(1, count);
-        preparedStatement.setString(2, parameter);
-        preparedStatement.execute();
-        preparedStatement.close();
-    }
 
-    public List<String> getAllParameter() throws SQLException {
-        List<String> parameters = new ArrayList<>();
-        String sql = "SELECT parameter FROM parameter ORDER BY count DESC";
-        PreparedStatement preparedStatement = getPreparedStatement(sql);
-        ResultSet resultSet = preparedStatement.executeQuery();
-        while (resultSet.next()) {
-            String dir = resultSet.getString("parameter");
-            parameters.add(dir);
+        FileReader fileReader = new FileReader(new File(fileName));
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        String line = bufferedReader.readLine();
+        if (line != null) {
+            String head = line.split(",")[0].trim();
+            if (head.equals("parameter")) {
+                int length = 1;
+                int index = 1;
+                int countIndex = 2;
+                while ((line = bufferedReader.readLine()) != null) {
+                    String[] row = line.split(",");
+                    String file = row[0];
+                    int count = Integer.parseInt(row[1]);
+                    preparedStatement.setString(index, file);
+                    preparedStatement.setInt(countIndex, count);
+                    length += 2;
+                    index = length;
+                    countIndex = index + 1;
+                }
+                preparedStatement.executeUpdate();
+                preparedStatement.close();
+            }
         }
-        resultSet.close();
-        preparedStatement.close();
-        return parameters;
+        bufferedReader.close();
     }
+
 }

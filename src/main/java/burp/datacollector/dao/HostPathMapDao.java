@@ -11,7 +11,7 @@ import java.util.HashSet;
 public class HostPathMapDao extends BaseDao {
 
     public final static String PATH_FILE = "/path.txt";
-    public final static String PATH_IMPORT_FILE = "/path_import.txt";
+    public final static String PATH_IMPORT_FILE = "/path_import.csv";
 
 
     public void insertIgnoreHostPath(String host, HashSet<String> pathSet) throws SQLException {

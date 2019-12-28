@@ -1,7 +1,6 @@
 package burp.datacollector.dao;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.PreparedStatement;
@@ -11,14 +10,15 @@ import java.util.HashSet;
 
 public class HostDirMapDao extends BaseDao {
 
-    public final static String DIR_IMPORT_FILE = "dir_import.txt";
-    public final static String DIR_FILE = "dir.txt";
+    public final static String DIR_IMPORT_FILE = "/dir_import.csv";
+    public final static String DIR_FILE = "/dir.txt";
 
     public void insertIgnoreHostDir(String host, HashSet<String> dirSet) throws SQLException {
 
         StringBuilder sqlStringBuilder = new StringBuilder("INSERT IGNORE INTO host_dir_map(host, dir) VALUES");
 
         int n = dirSet.size();
+
         for (int i = 0; i < n - 1; i++)
             sqlStringBuilder.append("(?,?), ");
         sqlStringBuilder.append("(?,?)");
@@ -53,8 +53,8 @@ public class HostDirMapDao extends BaseDao {
         PreparedStatement preparedStatement = getPreparedStatement(sql);
         ResultSet resultSet = preparedStatement.executeQuery();
 
-        File dirFile = new File(dirName + "/dir.txt");
-        File dirImportFile = new File(dirName + "/dir_import.txt");
+        File dirFile = new File(dirName + DIR_FILE);
+        File dirImportFile = new File(dirName + DIR_IMPORT_FILE);
         FileOutputStream dirFileOutputStream = new FileOutputStream(dirFile);
         FileOutputStream dirImportFileOutputStream = new FileOutputStream(dirImportFile);
         String fileHead = "dir,count\n";

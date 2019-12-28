@@ -8,7 +8,7 @@ import java.util.List;
 
 public class DirDao extends BaseDao {
     public void insertDir(String dir) throws SQLException {
-        String sql  = "INSERT INTO dir(dir, count) VALUES (?, 1)";
+        String sql = "INSERT INTO dir(dir, count) VALUES (?, 1)";
         PreparedStatement preparedStatement = getPreparedStatement(sql);
         preparedStatement.setString(1, dir);
         preparedStatement.execute();
@@ -21,7 +21,7 @@ public class DirDao extends BaseDao {
         PreparedStatement preparedStatement = getPreparedStatement(sql);
         preparedStatement.setString(1, dir);
         ResultSet resultSet = preparedStatement.executeQuery();
-        if(resultSet.next()){
+        if (resultSet.next()) {
             result = false;
         }
         resultSet.close();
@@ -29,10 +29,11 @@ public class DirDao extends BaseDao {
         return result;
     }
 
-    public void updateDirCount(String dir) throws SQLException {
-        String sql = "UPDATE dir SET count = count + 1 WHERE dir = ?";
+    public void addDirCount(String dir, int count) throws SQLException {
+        String sql = "UPDATE dir SET count = count + ? WHERE dir = ?";
         PreparedStatement preparedStatement = getPreparedStatement(sql);
-        preparedStatement.setString(1, dir);
+        preparedStatement.setInt(1, count);
+        preparedStatement.setString(2, dir);
         preparedStatement.execute();
         preparedStatement.close();
     }

@@ -15,7 +15,7 @@ public class DatabaseUtil {
     private static DatabaseUtil instance = null;
 
 
-    static{
+    static {
         try {
             Class.forName("com.mysql.jdbc.Driver");
         } catch (ClassNotFoundException e) {
@@ -28,10 +28,10 @@ public class DatabaseUtil {
     }
 
 
-    public static DatabaseUtil getInstance(){
-        if(instance == null) {
-            synchronized (DatabaseUtil.class){
-                if(instance == null) {
+    public static DatabaseUtil getInstance() {
+        if (instance == null) {
+            synchronized (DatabaseUtil.class) {
+                if (instance == null) {
                     instance = new DatabaseUtil();
                 }
             }
@@ -40,7 +40,7 @@ public class DatabaseUtil {
     }
 
     public boolean initConnection(IBurpExtenderCallbacks callbacks, String host, String port, String user, String password) {
-        String url = "jdbc:mysql://" + host +":" + port + "/?serverTimezone=Asia/Shanghai";
+        String url = "jdbc:mysql://" + host + ":" + port + "/?serverTimezone=Asia/Shanghai";
         boolean result = false;
         try {
             connection = DriverManager.getConnection(url, user, password);
@@ -66,62 +66,72 @@ public class DatabaseUtil {
             statement.execute(useDatabase);
 
             String createFileTable = "CREATE TABLE IF NOT EXISTS `file` (\n" +
-                    "  `filename` varchar(1024) NOT NULL,\n" +
-                    "  `count` int(11) NOT NULL\n" +
+                    "  `filename` varchar(256) NOT NULL,\n" +
+                    "  `count` int(11) NOT NULL,\n" +
+                    "  PRIMARY KEY (`filename`) \n" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
             statement.execute(createFileTable);
 
             String createHostFileTable = "CREATE TABLE IF NOT EXISTS `host_file_map` (\n" +
                     "  `host` varchar(128) NOT NULL,\n" +
-                    "  `filename` varchar(1024) NOT NULL\n" +
+                    "  `filename` varchar(256) NOT NULL,\n" +
+                    "  PRIMARY KEY (`host`, `filename`) \n" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
             statement.execute(createHostFileTable);
 
             String createPathTable = "CREATE TABLE IF NOT EXISTS `path` (\n" +
-                    "  `path` varchar(1024) NOT NULL,\n" +
-                    "  `count` int(11) NOT NULL\n" +
+                    "  `path` varchar(256) NOT NULL,\n" +
+                    "  `count` int(11) NOT NULL,\n" +
+                    "  PRIMARY KEY (`path`)\n" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
             statement.execute(createPathTable);
 
             String createHostPathTable = "CREATE TABLE IF NOT EXISTS `host_path_map` (\n" +
                     "  `host` varchar(128) NOT NULL,\n" +
-                    "  `path` varchar(1024) NOT NULL\n" +
+                    "  `path` varchar(256) NOT NULL,\n" +
+                    "  PRIMARY KEY (`host`, `path`)\n" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
             statement.execute(createHostPathTable);
 
             String createParameterTable = "CREATE TABLE IF NOT EXISTS `parameter` (\n" +
                     "  `parameter` varchar(64) NOT NULL,\n" +
-                    "  `count` int(11) NOT NULL\n" +
+                    "  `count` int(11) NOT NULL,\n" +
+                    "  PRIMARY KEY (`parameter`)\n" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
             statement.execute(createParameterTable);
 
             String createHostParameterTable = "CREATE TABLE IF NOT EXISTS `host_parameter_map` (\n" +
                     "  `host` varchar(128) NOT NULL,\n" +
-                    "  `parameter` varchar(64) NOT NULL\n" +
+                    "  `parameter` varchar(64) NOT NULL,\n" +
+                    "  PRIMARY KEY (`host`, `parameter`)\n" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
             statement.execute(createHostParameterTable);
 
             String createFullPathTable = "CREATE TABLE IF NOT EXISTS `full_path` (\n" +
-                    "  `full_path` varchar(1024) NOT NULL,\n" +
-                    "  `count` int(11) NOT NULL\n" +
+                    "  `full_path` varchar(256) NOT NULL,\n" +
+                    "  `count` int(11) NOT NULL,\n" +
+                    "  PRIMARY KEY (`full_path`)\n" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
             statement.execute(createFullPathTable);
 
             String createHostFullPathTable = "CREATE TABLE IF NOT EXISTS `host_full_path_map` (\n" +
                     "  `host` varchar(128) NOT NULL,\n" +
-                    "  `full_path` varchar(1024) NOT NULL\n" +
+                    "  `full_path` varchar(256) NOT NULL,\n" +
+                    "  PRIMARY KEY (`host`, `full_path`)\n" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
             statement.execute(createHostFullPathTable);
 
             String createDirTable = "CREATE TABLE IF NOT EXISTS `dir` (\n" +
                     "  `dir` varchar(32) NOT NULL,\n" +
-                    "  `count` int(11) NOT NULL\n" +
+                    "  `count` int(11) NOT NULL,\n" +
+                    "  PRIMARY KEY (`dir`)\n" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
             statement.execute(createDirTable);
 
             String createHostDirTable = "CREATE TABLE IF NOT EXISTS `host_dir_map` (\n" +
                     "  `host` varchar(128) NOT NULL,\n" +
-                    "  `dir` varchar(32) NOT NULL\n" +
+                    "  `dir` varchar(32) NOT NULL,\n" +
+                    "  PRIMARY KEY (`host`, `dir`)\n" +
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
             statement.execute(createHostDirTable);
 
@@ -137,12 +147,16 @@ public class DatabaseUtil {
     }
 
     public void connectTest(DataCollectorGui dataCollectorGui, IBurpExtenderCallbacks callbacks, String host, String port, String user, String password) {
-        String url = "jdbc:mysql://" + host +":" + port + "/?serverTimezone=Asia/Shanghai";
+        String url = "jdbc:mysql://" + host + ":" + port + "/?serverTimezone=Asia/Shanghai";
         try {
-            if(connection != null) {
-                connection.close();
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    //e.printStackTrace();
+                }
                 connection = DriverManager.getConnection(url, user, password);
-            }else {
+            } else {
                 connection = DriverManager.getConnection(url, user, password);
             }
             initDatabase(callbacks);
@@ -159,7 +173,7 @@ public class DatabaseUtil {
 
     public void closeConnection() {
         try {
-            if(connection != null) {
+            if (connection != null) {
                 connection.close();
             }
         } catch (SQLException e) {

@@ -8,7 +8,7 @@ import java.util.List;
 
 public class PathDao extends BaseDao {
     public void insertPath(String path) throws SQLException {
-        String sql  = "INSERT INTO path(path, count) VALUES (?, 1)";
+        String sql = "INSERT INTO path(path, count) VALUES (?, 1)";
         PreparedStatement preparedStatement = getPreparedStatement(sql);
         preparedStatement.setString(1, path);
         preparedStatement.execute();
@@ -21,7 +21,7 @@ public class PathDao extends BaseDao {
         PreparedStatement preparedStatement = getPreparedStatement(sql);
         preparedStatement.setString(1, path);
         ResultSet resultSet = preparedStatement.executeQuery();
-        if(resultSet.next()){
+        if (resultSet.next()) {
             result = false;
         }
         resultSet.close();
@@ -29,10 +29,11 @@ public class PathDao extends BaseDao {
         return result;
     }
 
-    public void updatePathCount(String path) throws SQLException {
-        String sql = "UPDATE path SET count = count + 1 WHERE path = ?";
+    public void addPathCount(String path, int count) throws SQLException {
+        String sql = "UPDATE path SET count = count + ? WHERE path = ?";
         PreparedStatement preparedStatement = getPreparedStatement(sql);
-        preparedStatement.setString(1, path);
+        preparedStatement.setInt(1, count);
+        preparedStatement.setString(2, path);
         preparedStatement.execute();
         preparedStatement.close();
     }

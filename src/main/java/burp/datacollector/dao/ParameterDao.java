@@ -9,7 +9,7 @@ import java.util.List;
 public class ParameterDao extends BaseDao {
 
     public void insertParameter(String parameter) throws SQLException {
-        String sql  = "INSERT INTO parameter(parameter, count) VALUES (?, 1)";
+        String sql = "INSERT INTO parameter(parameter, count) VALUES (?, 1)";
         PreparedStatement preparedStatement = getPreparedStatement(sql);
         preparedStatement.setString(1, parameter);
         preparedStatement.execute();
@@ -22,7 +22,7 @@ public class ParameterDao extends BaseDao {
         PreparedStatement preparedStatement = getPreparedStatement(sql);
         preparedStatement.setString(1, parameter);
         ResultSet resultSet = preparedStatement.executeQuery();
-        if(resultSet.next()){
+        if (resultSet.next()) {
             result = false;
         }
         resultSet.close();
@@ -30,10 +30,11 @@ public class ParameterDao extends BaseDao {
         return result;
     }
 
-    public void updateParameterCount(String parameter) throws SQLException {
-        String sql = "UPDATE parameter SET count = count + 1 WHERE parameter = ?";
+    public void addParameterCount(String parameter, int count) throws SQLException {
+        String sql = "UPDATE parameter SET count = count + ? WHERE parameter = ?";
         PreparedStatement preparedStatement = getPreparedStatement(sql);
-        preparedStatement.setString(1, parameter);
+        preparedStatement.setInt(1, count);
+        preparedStatement.setString(2, parameter);
         preparedStatement.execute();
         preparedStatement.close();
     }

@@ -5,15 +5,35 @@ import burp.datacollector.gui.DataCollectorGui;
 
 import java.awt.*;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListener {
 
     private final static String extensionName = "BurpDataCollector";
+    private final static String FULL_PATH = "full_path";
+    private final static String PATH = "path";
+    private final static String FILE = "file";
+    private final static String DIR = "dir";
+    private final static String PARAMETER = "parameter";
 
     private DataCollectorGui dataCollectorGui;
     private IBurpExtenderCallbacks callbacks;
+
+    // memory cache to check repeat
+    private HashMap<String, HashMap<String, HashSet<String>>> memoryHostValueMap = new HashMap<>();
+
+    // insert queue
+    private HashMap<String, HashMap<String, HashSet<String>>> insertHostValueMap = new HashMap<>();
+
 
     @Override
     public void registerExtenderCallbacks(IBurpExtenderCallbacks callbacks) {
@@ -35,8 +55,16 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
             callbacks.printOutput("database connect fail! please check you mysql config !");
         }
 
+        ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+        service.scheduleWithFixedDelay(() -> {
+            BurpExtender.this.saveData();
+            callbacks.printOutput("Scheduled export execution completed");
+        }, 0, 3, TimeUnit.MINUTES);
+
+
         callbacks.printOutput("load BurpDataCollector success !");
     }
+
 
     public void saveConfig() {
         callbacks.saveExtensionSetting(DataCollectorGui.MYSQL_HOST, dataCollectorGui.getMysqlHost());
@@ -90,7 +118,7 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
         DatabaseUtil.getInstance().closeConnection();
     }
 
-    public boolean checkBlackExt(String path) {
+    private boolean checkBlackExt(String path) {
         String[] exts = dataCollectorGui.getblackListExts();
         for (String ext : exts) {
             ext = ext.trim();
@@ -101,106 +129,236 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
         return false;
     }
 
+    private void addToInsertMap(String host, String value, String flag) {
+        HashMap<String, HashSet<String>> hostHashMap = insertHostValueMap.get(host);
+        if (hostHashMap == null) {
+            hostHashMap = new HashMap<>();
+            HashSet<String> hostHashSet = new HashSet<>();
+            hostHashSet.add(value);
+            hostHashMap.put(flag, hostHashSet);
+            insertHostValueMap.put(host, hostHashMap);
+        } else {
+            HashSet<String> hostHashSet = hostHashMap.get(flag);
+            if (hostHashSet == null) {
+                hostHashSet = new HashSet<>();
+                hostHashSet.add(value);
+                hostHashMap.put(flag, hostHashSet);
+            } else {
+                if (!hostHashSet.contains(value)) {
+                    hostHashSet.add(value);
+                }
+            }
+        }
+    }
+
+    private void cleanInsertMap() {
+        insertHostValueMap = new HashMap<>();
+    }
+
+    private HashSet<String> getInsertHashSet(String host, String flag) {
+        return insertHostValueMap.get(host).get(flag);
+    }
+
+    private boolean addToMemory(String host, String value, String flag) {
+        boolean result = true;
+        HashMap<String, HashSet<String>> hostHashMap = memoryHostValueMap.get(host);
+        if (hostHashMap == null) {
+            hostHashMap = new HashMap<>();
+            HashSet<String> hostHashSet = new HashSet<>();
+            hostHashSet.add(value);
+            hostHashMap.put(flag, hostHashSet);
+            memoryHostValueMap.put(host, hostHashMap);
+            result = false;
+        } else {
+            HashSet<String> hostHashSet = hostHashMap.get(flag);
+            if (hostHashSet == null) {
+                hostHashSet = new HashSet<>();
+                hostHashSet.add(value);
+                hostHashMap.put(flag, hostHashSet);
+                result = false;
+            } else {
+                if (!hostHashSet.contains(value)) {
+                    hostHashSet.add(value);
+                    result = false;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private boolean checkFullPath(String host, String fullPath) {
+        if (fullPath.length() > 256)
+            return false;
+
+        if (fullPath.equals("/"))
+            return false;
+
+        if (checkBlackExt(fullPath))
+            return false;
+
+        if (addToMemory(host, fullPath, FULL_PATH))
+            return false;
+
+
+        return true;
+    }
+
+    private boolean checkPath(String host, String path) {
+
+        if (path.length() > 256)
+            return false;
+
+        if (path.equals("/"))
+            return false;
+
+        if (addToMemory(host, path, PATH))
+            return false;
+
+        return true;
+    }
+
+    private boolean checkDir(String host, String dir) {
+
+        if (dir.length() > 32)
+            return false;
+
+        if (dir.equals("//"))
+            return false;
+
+        if (addToMemory(host, dir, DIR))
+            return false;
+
+        return true;
+    }
+
+    private boolean checkFile(String host, String fileName) {
+
+        if (fileName.length() > 256)
+            return false;
+
+        if (fileName.equals(""))
+            return false;
+
+        if (checkBlackExt(fileName))
+            return false;
+
+        if (addToMemory(host, fileName, FILE))
+            return false;
+
+        return true;
+    }
+
+    private boolean checkParameter(String host, String parameterName) {
+
+        if (parameterName.length() > 64)
+            return false;
+
+        if (parameterName.equals("") || parameterName.equals("_"))
+            return false;
+
+        // is a word ?
+        String reg = "^\\w+$";
+        Matcher matcher = Pattern.compile(reg).matcher(parameterName);
+        if (!matcher.find())
+            return false;
+
+        if (addToMemory(host, parameterName, PARAMETER))
+            return false;
+
+        return true;
+    }
+
     public void saveData() {
 
         IHttpRequestResponse[] httpRequestResponses = callbacks.getProxyHistory();
         IExtensionHelpers helpers = callbacks.getHelpers();
 
-        FileDao fileDao = new FileDao();
+        for (IHttpRequestResponse httpRequestResponse : httpRequestResponses) {
+            IRequestInfo requestInfo = helpers.analyzeRequest(httpRequestResponse);
+            String host = requestInfo.getUrl().getHost();
+            String fullPath = requestInfo.getUrl().getPath();
+
+            // insert full path : /aaa/bbb/ccc.php
+            if (checkFullPath(host, fullPath))
+                addToInsertMap(host, fullPath, FULL_PATH);
+
+            String path = fullPath.substring(0, fullPath.lastIndexOf('/') + 1);
+
+            // insert path : /aaa/bbb/
+            if (checkPath(host, path))
+                addToInsertMap(host, path, PATH);
+
+            String[] dirs = path.split("/");
+
+            // insert dir : aaa, bbb
+            for (String dir : dirs) {
+                dir = "/" + dir + "/";
+                if (checkDir(host, dir))
+                    addToInsertMap(host, path, DIR);
+            }
+
+            String fileName = fullPath.substring(fullPath.lastIndexOf("/") + 1);
+
+            if (checkFile(host, fileName))
+                addToInsertMap(host, fileName, FILE);
+
+            List<IParameter> parameters = requestInfo.getParameters();
+            for (IParameter parameter : parameters) {
+                if (parameter.getType() != 2) {
+                    String parameterName = parameter.getName();
+
+                    if (checkParameter(host, parameterName))
+                        addToInsertMap(host, parameterName, PARAMETER);
+                }
+            }
+
+        }
+
+        callbacks.printOutput("add data to insert queue finish");
+
         HostFileMapDao hostFileMapDao = new HostFileMapDao();
-        FullPathDao fullPathDao = new FullPathDao();
         HostFullPathMapDao hostFullPathMapDao = new HostFullPathMapDao();
-        PathDao pathDao = new PathDao();
         HostPathMapDao hostPathMapDao = new HostPathMapDao();
-        DirDao dirDao = new DirDao();
         HostDirMapDao hostDirMapDao = new HostDirMapDao();
-        ParameterDao parameterDao = new ParameterDao();
         HostParameterMapDao hostParameterMapDao = new HostParameterMapDao();
 
-        for (IHttpRequestResponse httpRequestResponse : httpRequestResponses) {
+        Set<String> hostSet = insertHostValueMap.keySet();
+        for (String host : hostSet) {
             try {
-                IRequestInfo requestInfo = helpers.analyzeRequest(httpRequestResponse);
-                String host = requestInfo.getUrl().getHost();
-                String fullPath = requestInfo.getUrl().getPath();
+                HashSet<String> fullPathSet = getInsertHashSet(host, FULL_PATH);
+                if (fullPathSet != null)
+                    hostFullPathMapDao.insertIgnoreHostFullPath(host, fullPathSet);
 
+                HashSet<String> pathSet = getInsertHashSet(host, PATH);
+                if (pathSet != null)
+                    hostPathMapDao.insertIgnoreHostPath(host, pathSet);
 
-                // insert full path : /aaa/bbb/ccc.php
-                if (!fullPath.equals("/") && !checkBlackExt(fullPath) && hostFullPathMapDao.hostFullPathNotExist(host, fullPath)) {
-                    if (fullPathDao.fullPathNotExist(fullPath)) {
-                        fullPathDao.insertFullPath(fullPath);
-                        hostFullPathMapDao.insertHostFullPath(host, fullPath);
-                    } else {
-                        fullPathDao.updateFullPathCount(fullPath);
-                        hostFullPathMapDao.insertHostFullPath(host, fullPath);
-                    }
-                }
+                HashSet<String> dirSet = getInsertHashSet(host, DIR);
+                if (dirSet != null)
+                    hostDirMapDao.insertIgnoreHostDir(host, dirSet);
 
-                String path = fullPath.substring(0, fullPath.lastIndexOf('/') + 1);
+                HashSet<String> fileSet = getInsertHashSet(host, FILE);
+                if (fileSet != null)
+                    hostFileMapDao.insertIgnoreHostFile(host, fileSet);
 
-                // insert path : /aaa/bbb/
-                if (!path.equals("/") && hostPathMapDao.hostPathNotExist(host, path)) {
-                    if (pathDao.pathNotExist(path)) {
-                        pathDao.insertPath(path);
-                        hostPathMapDao.insertHostPath(host, path);
-                    } else {
-                        pathDao.updatePathCount(path);
-                        hostPathMapDao.insertHostPath(host, path);
-                    }
-                }
+                HashSet<String> parameterSet = getInsertHashSet(host, PARAMETER);
+                if (parameterSet != null)
+                    hostParameterMapDao.insertIgnoreHostParameter(host, parameterSet);
 
-                String[] dirs = path.split("/");
-
-                // insert dir : aaa, bbb
-                for (String dir : dirs) {
-                    if (dir.equals(""))
-                        continue;
-                    dir = "/" + dir + "/";
-                    if (hostDirMapDao.hostDirNotExist(host, dir)) {
-                        if (dirDao.dirNotExist(dir)) {
-                            dirDao.insertDir(dir);
-                            hostDirMapDao.insertHostDir(host, dir);
-                        } else {
-                            dirDao.updateDirCount(dir);
-                            hostDirMapDao.insertHostDir(host, dir);
-                        }
-                    }
-                }
-
-                String fileName = fullPath.substring(fullPath.lastIndexOf("/") + 1);
-
-                if (!fileName.equals("") && !checkBlackExt(fileName) && hostFileMapDao.hostFileNotExist(host, fileName)) {
-                    if (fileDao.fileNotExist(fileName)) {
-                        fileDao.insertFile(fileName);
-                        hostFileMapDao.insertHostFile(host, fileName);
-                    } else {
-                        fileDao.updateFileCount(fileName);
-                        hostFileMapDao.insertHostFile(host, fileName);
-                    }
-                }
-
-                List<IParameter> parameters = requestInfo.getParameters();
-                for (IParameter parameter : parameters) {
-                    if (parameter.getType() != 2) {
-                        String parameterName = parameter.getName();
-
-                        if (!parameterName.equals("_") && hostParameterMapDao.hostParameterNotExist(host, parameterName)) {
-                            if (parameterDao.parameterNotExist(parameterName)) {
-                                parameterDao.insertParameter(parameterName);
-                                hostParameterMapDao.insertHostParameter(host, parameterName);
-                            } else {
-                                parameterDao.updateParameterCount(parameterName);
-                                hostParameterMapDao.insertHostParameter(host, parameterName);
-                            }
-                        }
-                    }
-                }
-            } catch (SQLException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 callbacks.printOutput(e.toString());
                 dataCollectorGui.appendOutput(e.toString());
             }
         }
+
+        // clear insert queue
+        cleanInsertMap();
+
+        callbacks.printOutput("export finish!");
         dataCollectorGui.appendOutput("export finish!");
     }
+
 
 }

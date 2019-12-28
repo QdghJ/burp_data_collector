@@ -6,10 +6,10 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FileDao extends BaseDao{
+public class FileDao extends BaseDao {
 
     public void insertFile(String fileName) throws SQLException {
-        String sql  = "INSERT INTO file(filename, count) VALUES (?, 1)";
+        String sql = "INSERT INTO file(filename, count) VALUES (?, 1)";
         PreparedStatement preparedStatement = getPreparedStatement(sql);
         preparedStatement.setString(1, fileName);
         preparedStatement.execute();
@@ -22,7 +22,7 @@ public class FileDao extends BaseDao{
         PreparedStatement preparedStatement = getPreparedStatement(sql);
         preparedStatement.setString(1, fileName);
         ResultSet resultSet = preparedStatement.executeQuery();
-        if(resultSet.next()){
+        if (resultSet.next()) {
             result = false;
         }
         resultSet.close();
@@ -30,7 +30,7 @@ public class FileDao extends BaseDao{
         return result;
     }
 
-    public void updateFileCount(String fileName) throws SQLException {
+    public void addFileCount(String fileName, int count) throws SQLException {
         String sql = "UPDATE file SET count = count + 1 WHERE filename = ?";
         PreparedStatement preparedStatement = getPreparedStatement(sql);
         preparedStatement.setString(1, fileName);

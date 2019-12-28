@@ -9,12 +9,13 @@ import java.util.List;
 public class FullPathDao extends BaseDao {
 
     public void insertFullPath(String fullPath) throws SQLException {
-        String sql  = "INSERT INTO full_path(full_path, count) VALUES (?, 1)";
+        String sql = "INSERT INTO full_path(full_path, count) VALUES (?, 1)";
         PreparedStatement preparedStatement = getPreparedStatement(sql);
         preparedStatement.setString(1, fullPath);
         preparedStatement.execute();
         preparedStatement.close();
     }
+
 
     public boolean fullPathNotExist(String fullPath) throws SQLException {
         boolean result = true;
@@ -22,7 +23,7 @@ public class FullPathDao extends BaseDao {
         PreparedStatement preparedStatement = getPreparedStatement(sql);
         preparedStatement.setString(1, fullPath);
         ResultSet resultSet = preparedStatement.executeQuery();
-        if(resultSet.next()){
+        if (resultSet.next()) {
             result = false;
         }
         resultSet.close();
@@ -30,10 +31,11 @@ public class FullPathDao extends BaseDao {
         return result;
     }
 
-    public void updateFullPathCount(String fullPath) throws SQLException {
-        String sql = "UPDATE full_path SET count = count + 1 WHERE full_path = ?";
+    public void addFullPathCount(String fullPath, int count) throws SQLException {
+        String sql = "UPDATE full_path SET count = count + ? WHERE full_path = ?";
         PreparedStatement preparedStatement = getPreparedStatement(sql);
-        preparedStatement.setString(1, fullPath);
+        preparedStatement.setInt(1, count);
+        preparedStatement.setString(2, fullPath);
         preparedStatement.execute();
         preparedStatement.close();
     }

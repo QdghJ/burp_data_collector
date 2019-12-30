@@ -1,13 +1,19 @@
 package burp.datacollector.dao;
 
-import java.io.*;
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvValidationException;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.LineNumberReader;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 public class FullPathDao extends BaseDao {
 
 
-    public void importFullPathFromFile(String fileName) throws IOException, SQLException {
+    public void importFullPathFromFile(String fileName) throws IOException, SQLException, CsvValidationException {
 
         File lineFile = new File(fileName);
         LineNumberReader lineNumberReader = new LineNumberReader(new FileReader(lineFile));
@@ -28,29 +34,29 @@ public class FullPathDao extends BaseDao {
         PreparedStatement preparedStatement = getPreparedStatement(sql);
 
         FileReader fileReader = new FileReader(new File(fileName));
-        BufferedReader bufferedReader = new BufferedReader(fileReader);
-        String line = bufferedReader.readLine();
+        CSVReader csvReader = new CSVReader(fileReader);
+        String[] line = csvReader.readNext();
         if (line != null) {
-            String head = line.split(",")[0].trim();
+            String head = line[0];
             if (head.equals("full_path")) {
                 int length = 1;
                 int index = 1;
                 int countIndex = 2;
-                while ((line = bufferedReader.readLine()) != null) {
-                    String[] row = line.split(",");
-                    String file = row[0];
-                    int count = Integer.parseInt(row[1]);
+                while ((line = csvReader.readNext()) != null) {
+                    String file = line[0];
+                    int count = Integer.parseInt(line[1]);
                     preparedStatement.setString(index, file);
                     preparedStatement.setInt(countIndex, count);
                     length += 2;
                     index = length;
                     countIndex = index + 1;
                 }
-                preparedStatement.executeUpdate();
-                preparedStatement.close();
+
             }
         }
-        bufferedReader.close();
+        preparedStatement.executeUpdate();
+        preparedStatement.close();
+        csvReader.close();
     }
 
 }

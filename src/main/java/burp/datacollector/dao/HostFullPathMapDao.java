@@ -1,7 +1,10 @@
 package burp.datacollector.dao;
 
+import com.opencsv.CSVWriter;
+
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -54,18 +57,18 @@ public class HostFullPathMapDao extends BaseDao {
         File fullPathFile = new File(dirName + FULL_PATH_FILE);
         File fullPathImportFile = new File(dirName + FULL_PATH_IMPORT_FILE);
         FileOutputStream fullPathOutputStream = new FileOutputStream(fullPathFile);
-        FileOutputStream fullPathImportFileOutputStream = new FileOutputStream(fullPathImportFile);
-        String fileHead = "full_path,count\n";
-        fullPathImportFileOutputStream.write(fileHead.getBytes());
+        FileWriter fileWriter = new FileWriter(fullPathImportFile);
+        CSVWriter csvWriter = new CSVWriter(fileWriter);
+        String[] fileHead = new String[]{"full_path", "count"};
+        csvWriter.writeNext(fileHead);
         while (resultSet.next()) {
             String fullPath = resultSet.getString(1);
             String row = fullPath + "\n";
             int count = resultSet.getInt(2);
             fullPathOutputStream.write(row.getBytes());
-            String importRow = fullPath + "," + String.valueOf(count) + "\n";
-            fullPathImportFileOutputStream.write(importRow.getBytes());
+            csvWriter.writeNext(new String[]{fullPath, String.valueOf(count)}, true);
         }
         fullPathOutputStream.close();
-        fullPathImportFileOutputStream.close();
+        csvWriter.close();
     }
 }

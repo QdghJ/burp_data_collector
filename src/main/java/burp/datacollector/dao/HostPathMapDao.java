@@ -1,7 +1,10 @@
 package burp.datacollector.dao;
 
+import com.opencsv.CSVWriter;
+
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -55,18 +58,18 @@ public class HostPathMapDao extends BaseDao {
         File pathFile = new File(dirName + PATH_FILE);
         File pathImportFile = new File(dirName + PATH_IMPORT_FILE);
         FileOutputStream pathOutputStream = new FileOutputStream(pathFile);
-        FileOutputStream pathImportFileOutputStream = new FileOutputStream(pathImportFile);
-        String fileHead = "path,count\n";
-        pathImportFileOutputStream.write(fileHead.getBytes());
+        FileWriter fileWriter = new FileWriter(pathImportFile);
+        CSVWriter csvWriter = new CSVWriter(fileWriter);
+        String[] fileHead = {"path", "count"};
+        csvWriter.writeNext(fileHead);
         while (resultSet.next()) {
             String path = resultSet.getString(1);
             String row = path + "\n";
             int count = resultSet.getInt(2);
             pathOutputStream.write(row.getBytes());
-            String importRow = path + "," + String.valueOf(count) + "\n";
-            pathImportFileOutputStream.write(importRow.getBytes());
+            csvWriter.writeNext(new String[]{path, String.valueOf(count)}, true);
         }
         pathOutputStream.close();
-        pathImportFileOutputStream.close();
+        csvWriter.close();
     }
 }

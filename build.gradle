@@ -17,4 +17,5 @@ dependencies {
     compile('net.portswigger.burp.extender:burp-extender-api:1.7.13')
     compile('com.intellij:forms_rt:7.0.3')
     compile('mysql:mysql-connector-java:8.0.18')
+    compile('com.opencsv:opencsv:5.0')
 }

@@ -296,7 +296,7 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
             for (String dir : dirs) {
                 dir = "/" + dir + "/";
                 if (checkDir(host, dir))
-                    addToInsertMap(host, path, DIR);
+                    addToInsertMap(host, dir, DIR);
             }
 
             String fileName = fullPath.substring(fullPath.lastIndexOf("/") + 1);

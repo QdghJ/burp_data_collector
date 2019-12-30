@@ -5,12 +5,13 @@ import burp.datacollector.dao.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
+import com.opencsv.CSVReader;
+import com.opencsv.exceptions.CsvValidationException;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -171,7 +172,7 @@ public class DataCollectorGui {
                                 appendOutput("file head error");
                             }
 
-                        } catch (IOException | SQLException ex) {
+                        } catch (IOException | SQLException | CsvValidationException ex) {
                             ex.printStackTrace();
                             appendOutput(ex.toString());
                         }
@@ -190,16 +191,15 @@ public class DataCollectorGui {
         return result;
     }
 
-    public String getFileHead(String fileName) throws IOException {
+    public String getFileHead(String fileName) throws IOException, CsvValidationException {
         String head = "";
         FileReader fileReader = new FileReader(new File(fileName));
-        BufferedReader bufferedReader = new BufferedReader(fileReader);
-        String line = bufferedReader.readLine();
+        CSVReader csvReader = new CSVReader(fileReader);
+        String[] line = csvReader.readNext();
         if (line != null) {
-            head = line.split(",")[0].trim();
+            head = line[0];
         }
-        appendOutput("file head: " + head);
-        bufferedReader.close();
+        csvReader.close();
         return head;
     }
 

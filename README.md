@@ -1,0 +1,34 @@
+#  BurpSuite Data Collector
+
+[Engish README](README-en.md)
+
+
+## 简介
+
+BurpSuite 数据收集插件，可以收集请求历史中的参数名、目录、路径和文件名。
+将这些数据保存在 MySQL 数据库中。导出时按出现的次数进行排序，生成排序好的字典。
+出现次数多的排在前面。
+
+## 功能
+
+- 每十分钟自动导出一次数据到数据库，支持手动导出。
+- 一键导出数据库中的字典到txt文件、csv文件。txt文件用于字典，csv文件用于导入，可导入其它人的csv文件来丰富字典。
+
+## 使用
+
+![usage](images/usage.png)
+
+设置好数据库主机地址、端口、账号和密码。点击 connection test 来测试是否可以连接成功。
+
+点击 export data to database 可以手动导出数据到数据库。通常不用点，因为每十分钟会自动导出一次数据。
+
+点击 save config 可以手动保存数据库连接信息，通常不用点，因为关闭时会自动保存连接信息。
+
+点击 export data to files 可以导出数据库中的数据到 txt 文件和 csv 文件，数据已经按照出现次数进行排序。txt文件用于目录或者参数 fuzz，csv 文件用于共享和备份数据。
+
+点击 import dict from files 可以选择之前导出的 csv 文件导入到数据库。
+
+![usage](images/dir_import.png)
+
+![usage](images/dir.png)
+

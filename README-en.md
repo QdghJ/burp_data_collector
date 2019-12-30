@@ -25,4 +25,9 @@ Click import dict from files to select the previously exported csv file to impor
 
 ![dir_import](images/dir_import.png)
 
+
 ![dir](images/dir.png)
+
+## Merge dictionary
+   
+There are some exported dictionaries on the dicts directory. If you want to share your own dictionaries, please use the plugin to import the csv file into your own database, and then export the csv file. The plugin will automatically merge the imported dictionary with the dictionary in the database. Submit a pull request on github to update the dictionary.

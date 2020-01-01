@@ -57,9 +57,12 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
         }
 
         service = Executors.newSingleThreadScheduledExecutor();
-        service.scheduleWithFixedDelay(() -> {
-            BurpExtender.this.saveData();
-            callbacks.printOutput("Scheduled export execution completed");
+        service.scheduleWithFixedDelay(new Runnable(){
+            @Override
+            public void run() {
+                BurpExtender.this.saveData();
+                callbacks.printOutput("Scheduled export execution completed");
+            }
         }, 0, 3, TimeUnit.MINUTES);
 
         callbacks.printOutput("load BurpDataCollector success !");
@@ -210,7 +213,7 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
         if (path.length() > 256)
             return false;
 
-        if (path.equals("/"))
+        if (path.equals("/") || path.equals("//"))
             return false;
 
         if (addToMemory(host, path, PATH))
@@ -286,9 +289,23 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
 
             String path = fullPath.substring(0, fullPath.lastIndexOf('/') + 1);
 
-            // insert path : /aaa/bbb/
-            if (checkPath(host, path))
+            // insert path : /aaa/bbb/cc/, /aaa/bbb/, /aaa/
+            String[] paths = path.split("/");
+            int len = paths.length;
+            if (checkPath(host, path)) {
+                for (int i = 1; i < len - 1; i++) {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    for (int j = 1; j <= i; j++) {
+                        stringBuilder.append("/");
+                        stringBuilder.append(paths[j]);
+                    }
+                    stringBuilder.append("/");
+                    String resultPath = stringBuilder.toString();
+                    if(checkPath(host, resultPath))
+                        addToInsertMap(host, resultPath, PATH);
+                }
                 addToInsertMap(host, path, PATH);
+            }
 
             String[] dirs = path.split("/");
 

@@ -44,14 +44,16 @@ public class HostFileMapDao extends BaseDao {
         preparedStatement.close();
     }
 
-    public void exportFile(String dirName) throws SQLException, IOException {
+    public void exportFile(String dirName, int fileCount) throws SQLException, IOException {
         String sql = "SELECT stat.filename, sum(fileCount) AS allCount\n" +
                 "FROM ((SELECT hfm.filename, count(*) AS fileCount FROM host_file_map hfm GROUP BY hfm.filename)\n" +
                 "      UNION ALL\n" +
                 "      (SELECT filename, count AS fileCount FROM file)) stat\n" +
                 "GROUP BY stat.filename\n" +
+                "HAVING allCount >= ?\n" +
                 "ORDER BY allCount DESC";
         PreparedStatement preparedStatement = getPreparedStatement(sql);
+        preparedStatement.setInt(1, fileCount);
         ResultSet resultSet = preparedStatement.executeQuery();
 
         File file = new File(dirName + FILE_FILE);

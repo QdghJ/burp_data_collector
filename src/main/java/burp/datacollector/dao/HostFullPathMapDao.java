@@ -44,14 +44,16 @@ public class HostFullPathMapDao extends BaseDao {
 
     }
 
-    public void exportFullPath(String dirName) throws SQLException, IOException {
+    public void exportFullPath(String dirName, int fullPathCount) throws SQLException, IOException {
         String sql = "SELECT stat.full_path, sum(fullPathCount) AS allCount\n" +
                 "FROM ((SELECT hfpm.full_path, count(*) AS fullPathCount FROM host_full_path_map hfpm GROUP BY hfpm.full_path)\n" +
                 "      UNION ALL\n" +
                 "      (SELECT full_path, count AS fullPathCount FROM full_path)) stat\n" +
                 "GROUP BY stat.full_path\n" +
+                "HAVING allCount >= ?\n" +
                 "ORDER BY allCount DESC";
         PreparedStatement preparedStatement = getPreparedStatement(sql);
+        preparedStatement.setInt(1, fullPathCount);
         ResultSet resultSet = preparedStatement.executeQuery();
 
         File fullPathFile = new File(dirName + FULL_PATH_FILE);

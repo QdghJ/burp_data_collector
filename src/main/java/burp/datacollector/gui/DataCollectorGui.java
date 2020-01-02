@@ -31,6 +31,11 @@ public class DataCollectorGui {
     private JTextField blackListExtsTextField;
     private JButton exportDataToFilesButton;
     private JButton importDirtFromFilesButton;
+    private JTextField pathCountTextField;
+    private JTextField fileCountTextField;
+    private JTextField dirCountTextField;
+    private JTextField parameterTextField;
+    private JTextField fullPathTextField;
     private StringBuilder output;
 
     public final static String MYSQL_HOST = "mysqlHost";
@@ -93,33 +98,38 @@ public class DataCollectorGui {
                     String absolutePath = dataDir.getAbsolutePath();
 
                     try {
+                        int fullPathCount = getFullPathCount();
+                        int pathCount = getPathCount();
+                        int fileCount = getFileCount();
+                        int dirCount = getDirCount();
+                        int parameterCount = getParameterCount();
                         HostDirMapDao hostDirMapDao = new HostDirMapDao();
-                        hostDirMapDao.exportDir(absolutePath);
+                        hostDirMapDao.exportDir(absolutePath, dirCount);
                         appendOutput("dir export to  " + absolutePath + HostDirMapDao.DIR_FILE);
                         appendOutput("dir import file export to  " + absolutePath + HostDirMapDao.DIR_IMPORT_FILE);
 
                         HostFullPathMapDao hostFullPathMapDao = new HostFullPathMapDao();
-                        hostFullPathMapDao.exportFullPath(absolutePath);
+                        hostFullPathMapDao.exportFullPath(absolutePath, fullPathCount);
                         appendOutput("full path export to  " + absolutePath + HostFullPathMapDao.FULL_PATH_FILE);
                         appendOutput("full path import file export to  " + absolutePath + HostFullPathMapDao.FULL_PATH_IMPORT_FILE);
 
                         HostPathMapDao hostPathMapDao = new HostPathMapDao();
-                        hostPathMapDao.exportPath(absolutePath);
+                        hostPathMapDao.exportPath(absolutePath, pathCount);
                         appendOutput("path export to  " + absolutePath + HostPathMapDao.PATH_FILE);
                         appendOutput("path import file export to  " + absolutePath + HostPathMapDao.PATH_IMPORT_FILE);
 
                         HostFileMapDao hostFileMapDao = new HostFileMapDao();
-                        hostFileMapDao.exportFile(absolutePath);
+                        hostFileMapDao.exportFile(absolutePath, fileCount);
                         appendOutput("file export to  " + absolutePath + HostFileMapDao.FILE_FILE);
                         appendOutput("file import file export to  " + absolutePath + HostFileMapDao.FILE_IMPORT_FILE);
 
                         HostParameterMapDao hostParameterMapDao = new HostParameterMapDao();
-                        hostParameterMapDao.exportParameter(absolutePath);
+                        hostParameterMapDao.exportParameter(absolutePath, parameterCount);
                         appendOutput("parameter export to  " + absolutePath + HostParameterMapDao.PARAMETER_FILE);
                         appendOutput("parameter import file export to  " + absolutePath + HostParameterMapDao.PARAMETER_IMPORT_FILE);
 
                         AllDao allDao = new AllDao();
-                        allDao.exportAll(absolutePath);
+                        allDao.exportAll(absolutePath, fullPathCount, pathCount, dirCount, fileCount);
                         appendOutput("all export to  " + absolutePath + "/all.txt");
 
                     } catch (SQLException | IOException ex) {
@@ -250,6 +260,41 @@ public class DataCollectorGui {
         blackListExtsTextField.setText(blackListExt);
     }
 
+    public int getPathCount() {
+        int count = Integer.parseInt(pathCountTextField.getText());
+        if (count < 1)
+            count = 1;
+        return count;
+    }
+
+    public int getFullPathCount() {
+        int count = Integer.parseInt(fullPathTextField.getText());
+        if (count < 1)
+            count = 1;
+        return count;
+    }
+
+    public int getDirCount() {
+        int count = Integer.parseInt(dirCountTextField.getText());
+        if (count < 1)
+            count = 1;
+        return count;
+    }
+
+    public int getFileCount() {
+        int count = Integer.parseInt(fileCountTextField.getText());
+        if (count < 1)
+            count = 1;
+        return count;
+    }
+
+    public int getParameterCount() {
+        int count = Integer.parseInt(parameterTextField.getText());
+        if (count < 1)
+            count = 1;
+        return count;
+    }
+
     public void appendOutput(String message) {
         output.append(message);
         output.append("\n");
@@ -265,9 +310,9 @@ public class DataCollectorGui {
      */
     private void $$$setupUI$$$() {
         jPanel = new JPanel();
-        jPanel.setLayout(new GridLayoutManager(10, 2, new Insets(0, 0, 0, 0), -1, -1));
+        jPanel.setLayout(new GridLayoutManager(12, 2, new Insets(0, 0, 0, 0), -1, -1));
         final Spacer spacer1 = new Spacer();
-        jPanel.add(spacer1, new GridConstraints(9, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        jPanel.add(spacer1, new GridConstraints(11, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         final JLabel label1 = new JLabel();
         label1.setText("mysql host:");
         jPanel.add(label1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(222, 16), null, 0, false));
@@ -294,13 +339,13 @@ public class DataCollectorGui {
         jPanel.add(mysqlPasswordTextField, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
         connectionTestButton = new JButton();
         connectionTestButton.setText("connection test");
-        jPanel.add(connectionTestButton, new GridConstraints(5, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(222, 27), null, 0, false));
+        jPanel.add(connectionTestButton, new GridConstraints(7, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(222, 27), null, 0, false));
         exportDataToDatabaseButton = new JButton();
         exportDataToDatabaseButton.setEnabled(true);
         exportDataToDatabaseButton.setText("export data to database");
-        jPanel.add(exportDataToDatabaseButton, new GridConstraints(5, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        jPanel.add(exportDataToDatabaseButton, new GridConstraints(7, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JScrollPane scrollPane1 = new JScrollPane();
-        jPanel.add(scrollPane1, new GridConstraints(8, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, new Dimension(1, 121), null, 0, false));
+        jPanel.add(scrollPane1, new GridConstraints(10, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, new Dimension(1, 121), null, 0, false));
         outputTextArea = new JTextArea();
         outputTextArea.setEditable(false);
         outputTextArea.setEnabled(true);
@@ -314,16 +359,52 @@ public class DataCollectorGui {
         jPanel.add(blackListExtsTextField, new GridConstraints(4, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
         exportDataToFilesButton = new JButton();
         exportDataToFilesButton.setText("export data to files");
-        jPanel.add(exportDataToFilesButton, new GridConstraints(6, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        jPanel.add(exportDataToFilesButton, new GridConstraints(8, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         saveConfigButton = new JButton();
         saveConfigButton.setText("save config");
-        jPanel.add(saveConfigButton, new GridConstraints(6, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(222, 27), null, 0, false));
+        jPanel.add(saveConfigButton, new GridConstraints(8, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(222, 27), null, 0, false));
         clearMessageButton = new JButton();
         clearMessageButton.setText("clear message");
-        jPanel.add(clearMessageButton, new GridConstraints(7, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(222, 27), null, 0, false));
+        jPanel.add(clearMessageButton, new GridConstraints(9, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(222, 27), null, 0, false));
         importDirtFromFilesButton = new JButton();
         importDirtFromFilesButton.setText("import dict from files");
-        jPanel.add(importDirtFromFilesButton, new GridConstraints(7, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        jPanel.add(importDirtFromFilesButton, new GridConstraints(9, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label6 = new JLabel();
+        label6.setText("the min count to export dict");
+        jPanel.add(label6, new GridConstraints(5, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JPanel panel1 = new JPanel();
+        panel1.setLayout(new GridLayoutManager(2, 7, new Insets(0, 0, 0, 0), -1, -1));
+        jPanel.add(panel1, new GridConstraints(6, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        final JLabel label7 = new JLabel();
+        label7.setText("path count:");
+        panel1.add(label7, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        pathCountTextField = new JTextField();
+        pathCountTextField.setText("2");
+        panel1.add(pathCountTextField, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        fileCountTextField = new JTextField();
+        fileCountTextField.setText("2");
+        panel1.add(fileCountTextField, new GridConstraints(0, 6, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        final JLabel label8 = new JLabel();
+        label8.setText("file count:");
+        panel1.add(label8, new GridConstraints(0, 5, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        dirCountTextField = new JTextField();
+        dirCountTextField.setText("2");
+        panel1.add(dirCountTextField, new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        final JLabel label9 = new JLabel();
+        label9.setText("parameter count:");
+        panel1.add(label9, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        parameterTextField = new JTextField();
+        parameterTextField.setText("2");
+        panel1.add(parameterTextField, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        final JLabel label10 = new JLabel();
+        label10.setText("full path count:");
+        panel1.add(label10, new GridConstraints(1, 2, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        fullPathTextField = new JTextField();
+        fullPathTextField.setText("2");
+        panel1.add(fullPathTextField, new GridConstraints(1, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        final JLabel label11 = new JLabel();
+        label11.setText("dir count:");
+        panel1.add(label11, new GridConstraints(0, 2, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
     }
 
     /**

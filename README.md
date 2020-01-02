@@ -20,11 +20,13 @@ BurpSuite 数据收集插件，可以收集请求历史中的参数名、目录�
 
 设置好数据库主机地址、端口、账号和密码。点击 connection test 来测试是否可以连接成功。
 
-点击 export data to database 可以手动导出数据到数据库。通常不用点，因为每十分钟会自动导出一次数据。
+export data to database 可以手动导出数据到数据库。通常不用点，因为每十分钟会自动导出一次数据。
 
 点击 save config 可以手动保存数据库连接信息，通常不用点，因为关闭时会自动保存连接信息。
 
 点击 export data to files 可以导出数据库中的数据到 txt 文件和 csv 文件，数据已经按照出现次数进行排序。txt文件用于目录或者参数 fuzz，csv 文件用于共享和备份数据。
+
+可以设置导出字典的最小count值。
 
 点击 import dict from files 可以选择之前导出的 csv 文件导入到数据库。
 

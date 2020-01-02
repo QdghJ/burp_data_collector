@@ -45,14 +45,16 @@ public class HostPathMapDao extends BaseDao {
         preparedStatement.close();
     }
 
-    public void exportPath(String dirName) throws SQLException, IOException {
+    public void exportPath(String dirName, int pathCount) throws SQLException, IOException {
         String sql = "SELECT stat.path, sum(pathCount) AS allCount\n" +
                 "FROM ((SELECT hpm.path, count(*) AS pathCount FROM host_path_map hpm GROUP BY hpm.path)\n" +
                 "      UNION ALL\n" +
                 "      (SELECT path, count AS pathCount FROM path)) stat\n" +
                 "GROUP BY stat.path\n" +
+                "HAVING allCount >= ?\n" +
                 "ORDER BY allCount DESC";
         PreparedStatement preparedStatement = getPreparedStatement(sql);
+        preparedStatement.setInt(1, pathCount);
         ResultSet resultSet = preparedStatement.executeQuery();
 
         File pathFile = new File(dirName + PATH_FILE);

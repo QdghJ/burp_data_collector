@@ -45,14 +45,16 @@ public class HostParameterMapDao extends BaseDao {
         preparedStatement.close();
     }
 
-    public void exportParameter(String dirName) throws SQLException, IOException {
+    public void exportParameter(String dirName, int parameterCount) throws SQLException, IOException {
         String sql = "SELECT stat.parameter, sum(parameterPathCount) AS allCount\n" +
                 "FROM ((SELECT hpm.parameter, count(*) AS parameterPathCount FROM host_parameter_map hpm GROUP BY hpm.parameter)\n" +
                 "      UNION ALL\n" +
                 "      (SELECT parameter, count AS parameterPathCount FROM parameter)) stat\n" +
                 "GROUP BY stat.parameter\n" +
+                "HAVING allCount >= ?\n" +
                 "ORDER BY allCount DESC";
         PreparedStatement preparedStatement = getPreparedStatement(sql);
+        preparedStatement.setInt(1, parameterCount);
         ResultSet resultSet = preparedStatement.executeQuery();
 
         File parameterFile = new File(dirName + PARAMETER_FILE);

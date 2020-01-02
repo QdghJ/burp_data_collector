@@ -46,14 +46,16 @@ public class HostDirMapDao extends BaseDao {
     }
 
 
-    public void exportDir(String dirName) throws SQLException, IOException {
+    public void exportDir(String dirName, int dirCount) throws SQLException, IOException {
         String sql = "SELECT stat.dir, sum(dirCount) AS allCount\n" +
                 "FROM ((SELECT hdm.dir, count(*) AS dirCount FROM host_dir_map hdm GROUP BY hdm.dir)\n" +
                 "      UNION ALL\n" +
                 "      (SELECT dir, count AS dirCount FROM dir)) stat\n" +
                 "GROUP BY stat.dir\n" +
+                "HAVING allCount >= ?\n" +
                 "ORDER BY allCount DESC";
         PreparedStatement preparedStatement = getPreparedStatement(sql);
+        preparedStatement.setInt(1, dirCount);
         ResultSet resultSet = preparedStatement.executeQuery();
 
         File dirFile = new File(dirName + DIR_FILE);

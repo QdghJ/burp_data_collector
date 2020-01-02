@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 
 public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListener {
 
-    private final static String extensionName = "BurpDataCollector";
+    private final static String extensionName = "BurpDataCollector v1.2";
     public final static String FULL_PATH = "full_path";
     public final static String PATH = "path";
     public final static String FILE = "file";
@@ -57,15 +57,15 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
         }
 
         service = Executors.newSingleThreadScheduledExecutor();
-        service.scheduleWithFixedDelay(new Runnable(){
+        service.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
                 BurpExtender.this.saveData();
                 callbacks.printOutput("Scheduled export execution completed");
             }
-        }, 0, 3, TimeUnit.MINUTES);
+        }, 0, 10, TimeUnit.MINUTES);
 
-        callbacks.printOutput("load BurpDataCollector success !");
+        callbacks.printOutput("load " + extensionName + " success !");
     }
 
 
@@ -301,7 +301,7 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
                     }
                     stringBuilder.append("/");
                     String resultPath = stringBuilder.toString();
-                    if(checkPath(host, resultPath))
+                    if (checkPath(host, resultPath))
                         addToInsertMap(host, resultPath, PATH);
                 }
                 addToInsertMap(host, path, PATH);
@@ -341,7 +341,9 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
         HostDirMapDao hostDirMapDao = new HostDirMapDao();
         HostParameterMapDao hostParameterMapDao = new HostParameterMapDao();
 
+
         Set<String> hostSet = insertHostValueMap.keySet();
+
         for (String host : hostSet) {
             try {
                 HashSet<String> fullPathSet = getInsertHashSet(host, FULL_PATH);

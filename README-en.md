@@ -21,12 +21,15 @@ Click save config to save the database connection information manually. Usually,
 
 Click export data to files to export the data in the database to a txt file and a csv file. The data has been sorted by the number of occurrences. The txt file is used for directories or parameter fuzz, and the csv file is used for sharing and backing up data.
 
+You can set the minimum count of the exported dictionary.
+
+
 Click import dict from files to select the previously exported csv file to import into the database.
 
 ![dir_import](images/dir_import.png)
 
-
 ![dir](images/dir.png)
+
 
 ## Merge dictionary
    

@@ -34,8 +34,8 @@ public class DataCollectorGui {
     private JTextField pathCountTextField;
     private JTextField fileCountTextField;
     private JTextField dirCountTextField;
-    private JTextField parameterTextField;
-    private JTextField fullPathTextField;
+    private JTextField parameterCountTextField;
+    private JTextField fullPathCountTextField;
     private StringBuilder output;
 
     public final static String MYSQL_HOST = "mysqlHost";
@@ -43,6 +43,11 @@ public class DataCollectorGui {
     public final static String MYSQL_USER = "mysqlUser";
     public final static String MYSQL_PASSWORD = "mysqlPassword";
     public final static String BLACK_LIST_EXT = "black_list_ext";
+    public final static String PATH_COUNT = "path_count";
+    public final static String FULL_PATH_COUNT = "full_path_count";
+    public final static String FILE_COUNT = "file_count";
+    public final static String PARAMETER_COUNT = "parameter_count";
+    public final static String DIR_COUNT = "dir_count";
 
     public final static String[] IMPORT_HEADS = new String[]{
             "full_path", "path", "file", "dir", "parameter"
@@ -267,11 +272,19 @@ public class DataCollectorGui {
         return count;
     }
 
+    public void setPathCount(String pathCount) {
+        pathCountTextField.setText(pathCount);
+    }
+
     public int getFullPathCount() {
-        int count = Integer.parseInt(fullPathTextField.getText());
+        int count = Integer.parseInt(fullPathCountTextField.getText());
         if (count < 1)
             count = 1;
         return count;
+    }
+
+    public void setFullPathCount(String fullPathCount) {
+        fullPathCountTextField.setText(fullPathCount);
     }
 
     public int getDirCount() {
@@ -281,6 +294,10 @@ public class DataCollectorGui {
         return count;
     }
 
+    public void setDirCount(String dirCount) {
+        dirCountTextField.setText(dirCount);
+    }
+
     public int getFileCount() {
         int count = Integer.parseInt(fileCountTextField.getText());
         if (count < 1)
@@ -288,11 +305,19 @@ public class DataCollectorGui {
         return count;
     }
 
+    public void setFileCount(String fileCount) {
+        fileCountTextField.setText(fileCount);
+    }
+
     public int getParameterCount() {
-        int count = Integer.parseInt(parameterTextField.getText());
+        int count = Integer.parseInt(parameterCountTextField.getText());
         if (count < 1)
             count = 1;
         return count;
+    }
+
+    public void setParameterCount(String parameterCount) {
+        parameterCountTextField.setText(parameterCount);
     }
 
     public void appendOutput(String message) {
@@ -393,15 +418,15 @@ public class DataCollectorGui {
         final JLabel label9 = new JLabel();
         label9.setText("parameter count:");
         panel1.add(label9, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        parameterTextField = new JTextField();
-        parameterTextField.setText("2");
-        panel1.add(parameterTextField, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        parameterCountTextField = new JTextField();
+        parameterCountTextField.setText("2");
+        panel1.add(parameterCountTextField, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
         final JLabel label10 = new JLabel();
         label10.setText("full path count:");
         panel1.add(label10, new GridConstraints(1, 2, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        fullPathTextField = new JTextField();
-        fullPathTextField.setText("2");
-        panel1.add(fullPathTextField, new GridConstraints(1, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        fullPathCountTextField = new JTextField();
+        fullPathCountTextField.setText("2");
+        panel1.add(fullPathCountTextField, new GridConstraints(1, 4, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
         final JLabel label11 = new JLabel();
         label11.setText("dir count:");
         panel1.add(label11, new GridConstraints(0, 2, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));

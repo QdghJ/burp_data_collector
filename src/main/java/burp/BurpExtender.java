@@ -17,12 +17,13 @@ import java.util.regex.Pattern;
 
 public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListener {
 
-    private final static String extensionName = "BurpDataCollector v1.2";
+    private final static String extensionName = "BurpDataCollector";
     public final static String FULL_PATH = "full_path";
     public final static String PATH = "path";
     public final static String FILE = "file";
     public final static String DIR = "dir";
     public final static String PARAMETER = "parameter";
+
 
     private DataCollectorGui dataCollectorGui;
     private IBurpExtenderCallbacks callbacks;
@@ -75,6 +76,12 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
         callbacks.saveExtensionSetting(DataCollectorGui.MYSQL_USER, dataCollectorGui.getMysqlUser());
         callbacks.saveExtensionSetting(DataCollectorGui.MYSQL_PASSWORD, dataCollectorGui.getMysqlPassword());
         callbacks.saveExtensionSetting(DataCollectorGui.BLACK_LIST_EXT, dataCollectorGui.getBlackListExtStr());
+        callbacks.saveExtensionSetting(DataCollectorGui.PATH_COUNT, String.valueOf(dataCollectorGui.getPathCount()));
+        callbacks.saveExtensionSetting(DataCollectorGui.FULL_PATH_COUNT, String.valueOf(dataCollectorGui.getFullPathCount()));
+        callbacks.saveExtensionSetting(DataCollectorGui.DIR_COUNT, String.valueOf(dataCollectorGui.getDirCount()));
+        callbacks.saveExtensionSetting(DataCollectorGui.FILE_COUNT, String.valueOf(dataCollectorGui.getFileCount()));
+        callbacks.saveExtensionSetting(DataCollectorGui.PARAMETER_COUNT, String.valueOf(dataCollectorGui.getParameterCount()));
+
     }
 
     private void loadConfig() {
@@ -83,6 +90,12 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
         String mysqlUser = callbacks.loadExtensionSetting(DataCollectorGui.MYSQL_USER);
         String mysqlPassword = callbacks.loadExtensionSetting(DataCollectorGui.MYSQL_PASSWORD);
         String blackListExt = callbacks.loadExtensionSetting(DataCollectorGui.BLACK_LIST_EXT);
+        String pathCount = callbacks.loadExtensionSetting(DataCollectorGui.PATH_COUNT);
+        String fullPathCount = callbacks.loadExtensionSetting(DataCollectorGui.FULL_PATH_COUNT);
+        String dirCount = callbacks.loadExtensionSetting(DataCollectorGui.DIR_COUNT);
+        String fileCount = callbacks.loadExtensionSetting(DataCollectorGui.FILE_COUNT);
+        String parameterCount = callbacks.loadExtensionSetting(DataCollectorGui.PARAMETER_COUNT);
+
         if (mysqlHost != null) {
             dataCollectorGui.setMysqlHost(mysqlHost);
         }
@@ -97,6 +110,21 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
         }
         if (blackListExt != null) {
             dataCollectorGui.setBlackListExt(blackListExt);
+        }
+        if (pathCount != null) {
+            dataCollectorGui.setPathCount(pathCount);
+        }
+        if (fullPathCount != null) {
+            dataCollectorGui.setFullPathCount(fullPathCount);
+        }
+        if (dirCount != null) {
+            dataCollectorGui.setDirCount(dirCount);
+        }
+        if (fileCount != null) {
+            dataCollectorGui.setFileCount(fileCount);
+        }
+        if (parameterCount != null) {
+            dataCollectorGui.setParameterCount(parameterCount);
         }
     }
 

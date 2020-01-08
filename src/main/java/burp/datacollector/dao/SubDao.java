@@ -10,9 +10,9 @@ import java.io.LineNumberReader;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-public class ParameterDao extends BaseDao {
+public class SubDao extends BaseDao {
 
-    public void importParameterFromFile(String fileName) throws IOException, SQLException, CsvValidationException {
+    public void importSubFromFile(String fileName) throws IOException, SQLException, CsvValidationException {
 
         File lineFile = new File(fileName);
         LineNumberReader lineNumberReader = new LineNumberReader(new FileReader(lineFile));
@@ -23,7 +23,7 @@ public class ParameterDao extends BaseDao {
         if (lineLength < 2)
             return;
 
-        StringBuilder sqlStringBuilder = new StringBuilder("INSERT INTO `parameter` (`parameter`, `count`) VALUES");
+        StringBuilder sqlStringBuilder = new StringBuilder("INSERT INTO `sub` (`sub`, `count`) VALUES");
         int n = lineLength - 1;
         for (int i = 0; i < n - 1; i++) {
             sqlStringBuilder.append("(?, ?),");
@@ -37,14 +37,14 @@ public class ParameterDao extends BaseDao {
         String[] line = csvReader.readNext();
         if (line != null) {
             String head = line[0];
-            if (head.equals("parameter")) {
+            if (head.equals("sub")) {
                 int length = 1;
                 int index = 1;
                 int countIndex = 2;
                 while ((line = csvReader.readNext()) != null) {
-                    String parameter = line[0];
+                    String sub = line[0];
                     int count = Integer.parseInt(line[1]);
-                    preparedStatement.setString(index, parameter);
+                    preparedStatement.setString(index, sub);
                     preparedStatement.setInt(countIndex, count);
                     length += 2;
                     index = length;

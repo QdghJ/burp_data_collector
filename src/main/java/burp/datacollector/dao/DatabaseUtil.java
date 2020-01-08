@@ -135,6 +135,21 @@ public class DatabaseUtil {
                     ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
             statement.execute(createHostDirTable);
 
+            String createSubTable = "CREATE TABLE IF NOT EXISTS `sub` (\n" +
+                    "  `sub` varchar(64) NOT NULL,\n" +
+                    "  `count` int(11) NOT NULL,\n" +
+                    "  PRIMARY KEY (`sub`)\n" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+            statement.execute(createSubTable);
+
+            String createHostSubDomainTable = "CREATE TABLE IF NOT EXISTS `host_sub_map` (\n" +
+                    "  `host` varchar(128) NOT NULL,\n" +
+                    "  `sub` varchar(64) NOT NULL,\n" +
+                    "  PRIMARY KEY (`host`, `sub`)\n" +
+                    ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+            statement.execute(createHostSubDomainTable);
+
+
             callbacks.printOutput("init database success!");
         } catch (SQLException e) {
             e.printStackTrace();

@@ -42,9 +42,9 @@ public class DirDao extends BaseDao {
                 int index = 1;
                 int countIndex = 2;
                 while ((line = csvReader.readNext()) != null) {
-                    String file = line[0];
+                    String dir = line[0];
                     int count = Integer.parseInt(line[1]);
-                    preparedStatement.setString(index, file);
+                    preparedStatement.setString(index, dir);
                     preparedStatement.setInt(countIndex, count);
                     length += 2;
                     index = length;

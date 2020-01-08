@@ -23,7 +23,7 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
     public final static String FILE = "file";
     public final static String DIR = "dir";
     public final static String PARAMETER = "parameter";
-
+    public final static String SUB = "sub";
 
     private DataCollectorGui dataCollectorGui;
     private IBurpExtenderCallbacks callbacks;
@@ -81,6 +81,7 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
         callbacks.saveExtensionSetting(DataCollectorGui.DIR_COUNT, String.valueOf(dataCollectorGui.getDirCount()));
         callbacks.saveExtensionSetting(DataCollectorGui.FILE_COUNT, String.valueOf(dataCollectorGui.getFileCount()));
         callbacks.saveExtensionSetting(DataCollectorGui.PARAMETER_COUNT, String.valueOf(dataCollectorGui.getParameterCount()));
+        callbacks.saveExtensionSetting(DataCollectorGui.SUB_COUNT, String.valueOf(dataCollectorGui.getSubCount()));
 
     }
 
@@ -95,6 +96,7 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
         String dirCount = callbacks.loadExtensionSetting(DataCollectorGui.DIR_COUNT);
         String fileCount = callbacks.loadExtensionSetting(DataCollectorGui.FILE_COUNT);
         String parameterCount = callbacks.loadExtensionSetting(DataCollectorGui.PARAMETER_COUNT);
+        String subCount = callbacks.loadExtensionSetting(DataCollectorGui.SUB_COUNT);
 
         if (mysqlHost != null) {
             dataCollectorGui.setMysqlHost(mysqlHost);
@@ -125,6 +127,9 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
         }
         if (parameterCount != null) {
             dataCollectorGui.setParameterCount(parameterCount);
+        }
+        if (subCount != null) {
+            dataCollectorGui.setSubCount(subCount);
         }
     }
 
@@ -301,6 +306,24 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
         return true;
     }
 
+    private boolean checkSub(String host, String sub) {
+
+        if (sub.length() > 64)
+            return false;
+
+        // host is ip ?
+        String reg = "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$";
+        Matcher matcher = Pattern.compile(reg).matcher(host);
+        if (matcher.find()) {
+            return false;
+        }
+
+        if (addToMemory(host, sub, SUB))
+            return false;
+
+        return true;
+    }
+
     public void saveData() {
 
         IHttpRequestResponse[] httpRequestResponses = callbacks.getProxyHistory();
@@ -349,6 +372,31 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
             if (checkFile(host, fileName))
                 addToInsertMap(host, fileName, FILE);
 
+            // host = aa.bb.cc.dd.ee
+            String[] subs = host.split("\\.");
+            int subLength = subs.length;
+            if (subLength > 2) {
+
+                // insert aa,bb,cc
+                for (int l = 0; l < subLength - 3; l++) {
+                    if (checkSub(host, subs[l]))
+                        addToInsertMap(host, subs[l], SUB);
+
+                }
+                // insert aa.bb.cc , bb.cc , cc
+                for (int i = subLength - 3, j = 0; j <= i; j++) {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    for (int k = j; k < i; k++) {
+                        stringBuilder.append(subs[k]);
+                        stringBuilder.append(".");
+                    }
+                    stringBuilder.append(subs[i]);
+                    String sub = stringBuilder.toString();
+                    if (checkSub(host, sub))
+                        addToInsertMap(host, sub, SUB);
+                }
+
+            }
             List<IParameter> parameters = requestInfo.getParameters();
             for (IParameter parameter : parameters) {
                 if (parameter.getType() != 2) {
@@ -359,6 +407,7 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
                 }
             }
 
+
         }
 
         callbacks.printOutput("add data to insert queue finish");
@@ -368,7 +417,7 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
         HostPathMapDao hostPathMapDao = new HostPathMapDao();
         HostDirMapDao hostDirMapDao = new HostDirMapDao();
         HostParameterMapDao hostParameterMapDao = new HostParameterMapDao();
-
+        HostSubDao hostSubDao = new HostSubDao();
 
         Set<String> hostSet = insertHostValueMap.keySet();
 
@@ -393,6 +442,10 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
                 HashSet<String> parameterSet = getInsertHashSet(host, PARAMETER);
                 if (parameterSet != null)
                     hostParameterMapDao.insertIgnoreHostParameter(host, parameterSet);
+
+                HashSet<String> subSet = getInsertHashSet(host, SUB);
+                if (subSet != null)
+                    hostSubDao.insertIgnoreHostSub(host, subSet);
 
             } catch (Exception e) {
                 e.printStackTrace();

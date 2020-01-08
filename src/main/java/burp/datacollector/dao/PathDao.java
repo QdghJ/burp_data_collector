@@ -42,9 +42,9 @@ public class PathDao extends BaseDao {
                 int index = 1;
                 int countIndex = 2;
                 while ((line = csvReader.readNext()) != null) {
-                    String file = line[0];
+                    String path = line[0];
                     int count = Integer.parseInt(line[1]);
-                    preparedStatement.setString(index, file);
+                    preparedStatement.setString(index, path);
                     preparedStatement.setInt(countIndex, count);
                     length += 2;
                     index = length;

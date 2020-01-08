@@ -1,6 +1,6 @@
 ## Introduction
 
-BurpSuite data collection plugin can collect parameter names, directories, paths, and file names in the request history.
+BurpSuite data collection plugin can collect parameter names, directories, paths, , sub domain and file names in the request history.
 Save this data in MySQL database. Sort by the number of occurrences during export to generate a sorted dictionary.
 The most frequent occurrences come first.
 

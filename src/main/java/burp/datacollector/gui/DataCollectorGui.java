@@ -101,54 +101,60 @@ public class DataCollectorGui {
                 fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                 int selected = fileChooser.showDialog(new JLabel(), "select folder to export data");
                 if (selected == JFileChooser.APPROVE_OPTION) {
-                    File dataDir = fileChooser.getSelectedFile();
-                    String absolutePath = dataDir.getAbsolutePath();
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            File dataDir = fileChooser.getSelectedFile();
+                            String absolutePath = dataDir.getAbsolutePath();
 
-                    try {
-                        int fullPathCount = getFullPathCount();
-                        int pathCount = getPathCount();
-                        int fileCount = getFileCount();
-                        int dirCount = getDirCount();
-                        int parameterCount = getParameterCount();
-                        int subCount = getSubCount();
-                        HostDirMapDao hostDirMapDao = new HostDirMapDao();
-                        hostDirMapDao.exportDir(absolutePath, dirCount);
-                        appendOutput("dir export to  " + absolutePath + HostDirMapDao.DIR_FILE);
-                        appendOutput("dir import file export to  " + absolutePath + HostDirMapDao.DIR_IMPORT_FILE);
+                            try {
+                                int fullPathCount = getFullPathCount();
+                                int pathCount = getPathCount();
+                                int fileCount = getFileCount();
+                                int dirCount = getDirCount();
+                                int parameterCount = getParameterCount();
+                                int subCount = getSubCount();
+                                HostDirMapDao hostDirMapDao = new HostDirMapDao();
+                                hostDirMapDao.exportDir(absolutePath, dirCount);
+                                appendOutput("dir export to  " + absolutePath + HostDirMapDao.DIR_FILE);
+                                appendOutput("dir import file export to  " + absolutePath + HostDirMapDao.DIR_IMPORT_FILE);
 
-                        HostFullPathMapDao hostFullPathMapDao = new HostFullPathMapDao();
-                        hostFullPathMapDao.exportFullPath(absolutePath, fullPathCount);
-                        appendOutput("full path export to  " + absolutePath + HostFullPathMapDao.FULL_PATH_FILE);
-                        appendOutput("full path import file export to  " + absolutePath + HostFullPathMapDao.FULL_PATH_IMPORT_FILE);
+                                HostFullPathMapDao hostFullPathMapDao = new HostFullPathMapDao();
+                                hostFullPathMapDao.exportFullPath(absolutePath, fullPathCount);
+                                appendOutput("full path export to  " + absolutePath + HostFullPathMapDao.FULL_PATH_FILE);
+                                appendOutput("full path import file export to  " + absolutePath + HostFullPathMapDao.FULL_PATH_IMPORT_FILE);
 
-                        HostPathMapDao hostPathMapDao = new HostPathMapDao();
-                        hostPathMapDao.exportPath(absolutePath, pathCount);
-                        appendOutput("path export to  " + absolutePath + HostPathMapDao.PATH_FILE);
-                        appendOutput("path import file export to  " + absolutePath + HostPathMapDao.PATH_IMPORT_FILE);
+                                HostPathMapDao hostPathMapDao = new HostPathMapDao();
+                                hostPathMapDao.exportPath(absolutePath, pathCount);
+                                appendOutput("path export to  " + absolutePath + HostPathMapDao.PATH_FILE);
+                                appendOutput("path import file export to  " + absolutePath + HostPathMapDao.PATH_IMPORT_FILE);
 
-                        HostFileMapDao hostFileMapDao = new HostFileMapDao();
-                        hostFileMapDao.exportFile(absolutePath, fileCount);
-                        appendOutput("file export to  " + absolutePath + HostFileMapDao.FILE_FILE);
-                        appendOutput("file import file export to  " + absolutePath + HostFileMapDao.FILE_IMPORT_FILE);
+                                HostFileMapDao hostFileMapDao = new HostFileMapDao();
+                                hostFileMapDao.exportFile(absolutePath, fileCount);
+                                appendOutput("file export to  " + absolutePath + HostFileMapDao.FILE_FILE);
+                                appendOutput("file import file export to  " + absolutePath + HostFileMapDao.FILE_IMPORT_FILE);
 
-                        HostParameterMapDao hostParameterMapDao = new HostParameterMapDao();
-                        hostParameterMapDao.exportParameter(absolutePath, parameterCount);
-                        appendOutput("parameter export to  " + absolutePath + HostParameterMapDao.PARAMETER_FILE);
-                        appendOutput("parameter import file export to  " + absolutePath + HostParameterMapDao.PARAMETER_IMPORT_FILE);
+                                HostParameterMapDao hostParameterMapDao = new HostParameterMapDao();
+                                hostParameterMapDao.exportParameter(absolutePath, parameterCount);
+                                appendOutput("parameter export to  " + absolutePath + HostParameterMapDao.PARAMETER_FILE);
+                                appendOutput("parameter import file export to  " + absolutePath + HostParameterMapDao.PARAMETER_IMPORT_FILE);
 
-                        HostSubDao hostSubDao = new HostSubDao();
-                        hostSubDao.exportSub(absolutePath, subCount);
-                        appendOutput("sub export to  " + absolutePath + HostSubDao.SUB_FILE);
-                        appendOutput("sub import file export to  " + absolutePath + HostSubDao.SUB_IMPORT_FILE);
+                                HostSubDao hostSubDao = new HostSubDao();
+                                hostSubDao.exportSub(absolutePath, subCount);
+                                appendOutput("sub export to  " + absolutePath + HostSubDao.SUB_FILE);
+                                appendOutput("sub import file export to  " + absolutePath + HostSubDao.SUB_IMPORT_FILE);
 
-                        AllDao allDao = new AllDao();
-                        allDao.exportAll(absolutePath, fullPathCount, pathCount, dirCount, fileCount);
-                        appendOutput("all export to  " + absolutePath + "/all.txt");
+                                AllDao allDao = new AllDao();
+                                allDao.exportAll(absolutePath, fullPathCount, pathCount, dirCount, fileCount);
+                                appendOutput("all export to  " + absolutePath + "/all.txt");
 
-                    } catch (SQLException | IOException ex) {
-                        ex.printStackTrace();
-                        appendOutput(ex.toString());
-                    }
+                            } catch (SQLException | IOException ex) {
+                                ex.printStackTrace();
+                                appendOutput(ex.toString());
+                            }
+                        }
+                    }).start();
+
                 }
 
             }

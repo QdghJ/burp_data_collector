@@ -325,141 +325,145 @@ public class BurpExtender implements IBurpExtender, ITab, IExtensionStateListene
     }
 
     public void saveData() {
+        if(DatabaseUtil.getInstance().getConnection() != null) {
 
-        IHttpRequestResponse[] httpRequestResponses = callbacks.getProxyHistory();
-        IExtensionHelpers helpers = callbacks.getHelpers();
+            IHttpRequestResponse[] httpRequestResponses = callbacks.getProxyHistory();
+            IExtensionHelpers helpers = callbacks.getHelpers();
 
-        for (IHttpRequestResponse httpRequestResponse : httpRequestResponses) {
-            IRequestInfo requestInfo = helpers.analyzeRequest(httpRequestResponse);
-            String host = requestInfo.getUrl().getHost();
-            String fullPath = requestInfo.getUrl().getPath();
+            for (IHttpRequestResponse httpRequestResponse : httpRequestResponses) {
+                IRequestInfo requestInfo = helpers.analyzeRequest(httpRequestResponse);
+                String host = requestInfo.getUrl().getHost();
+                String fullPath = requestInfo.getUrl().getPath();
 
-            // insert full path : /aaa/bbb/ccc.php
-            if (checkFullPath(host, fullPath))
-                addToInsertMap(host, fullPath, FULL_PATH);
+                // insert full path : /aaa/bbb/ccc.php
+                if (checkFullPath(host, fullPath))
+                    addToInsertMap(host, fullPath, FULL_PATH);
 
-            String path = fullPath.substring(0, fullPath.lastIndexOf('/') + 1);
+                String path = fullPath.substring(0, fullPath.lastIndexOf('/') + 1);
 
-            // insert path : /aaa/bbb/cc/, /aaa/bbb/, /aaa/
-            String[] paths = path.split("/");
-            int len = paths.length;
-            if (checkPath(host, path)) {
-                for (int i = 1; i < len - 1; i++) {
-                    StringBuilder stringBuilder = new StringBuilder();
-                    for (int j = 1; j <= i; j++) {
+                // insert path : /aaa/bbb/cc/, /aaa/bbb/, /aaa/
+                String[] paths = path.split("/");
+                int len = paths.length;
+                if (checkPath(host, path)) {
+                    for (int i = 1; i < len - 1; i++) {
+                        StringBuilder stringBuilder = new StringBuilder();
+                        for (int j = 1; j <= i; j++) {
+                            stringBuilder.append("/");
+                            stringBuilder.append(paths[j]);
+                        }
                         stringBuilder.append("/");
-                        stringBuilder.append(paths[j]);
+                        String resultPath = stringBuilder.toString();
+                        if (checkPath(host, resultPath))
+                            addToInsertMap(host, resultPath, PATH);
                     }
-                    stringBuilder.append("/");
-                    String resultPath = stringBuilder.toString();
-                    if (checkPath(host, resultPath))
-                        addToInsertMap(host, resultPath, PATH);
+                    addToInsertMap(host, path, PATH);
                 }
-                addToInsertMap(host, path, PATH);
-            }
 
-            String[] dirs = path.split("/");
+                String[] dirs = path.split("/");
 
-            // insert dir : aaa, bbb
-            for (String dir : dirs) {
-                dir = "/" + dir + "/";
-                if (checkDir(host, dir))
-                    addToInsertMap(host, dir, DIR);
-            }
-
-            String fileName = fullPath.substring(fullPath.lastIndexOf("/") + 1);
-
-            if (checkFile(host, fileName))
-                addToInsertMap(host, fileName, FILE);
-
-            // host = aa.bb.cc.dd.ee
-            String[] subs = host.split("\\.");
-            int subLength = subs.length;
-            if (subLength > 2) {
-
-                // insert aa,bb,cc
-                for (int l = 0; l < subLength - 3; l++) {
-                    if (checkSub(host, subs[l]))
-                        addToInsertMap(host, subs[l], SUB);
-
+                // insert dir : aaa, bbb
+                for (String dir : dirs) {
+                    dir = "/" + dir + "/";
+                    if (checkDir(host, dir))
+                        addToInsertMap(host, dir, DIR);
                 }
-                // insert aa.bb.cc , bb.cc , cc
-                for (int i = subLength - 3, j = 0; j <= i; j++) {
-                    StringBuilder stringBuilder = new StringBuilder();
-                    for (int k = j; k < i; k++) {
-                        stringBuilder.append(subs[k]);
-                        stringBuilder.append(".");
+
+                String fileName = fullPath.substring(fullPath.lastIndexOf("/") + 1);
+
+                if (checkFile(host, fileName))
+                    addToInsertMap(host, fileName, FILE);
+
+                // host = aa.bb.cc.dd.ee
+                String[] subs = host.split("\\.");
+                int subLength = subs.length;
+                if (subLength > 2) {
+
+                    // insert aa,bb,cc
+                    for (int l = 0; l < subLength - 3; l++) {
+                        if (checkSub(host, subs[l]))
+                            addToInsertMap(host, subs[l], SUB);
+
                     }
-                    stringBuilder.append(subs[i]);
-                    String sub = stringBuilder.toString();
-                    if (checkSub(host, sub))
-                        addToInsertMap(host, sub, SUB);
+                    // insert aa.bb.cc , bb.cc , cc
+                    for (int i = subLength - 3, j = 0; j <= i; j++) {
+                        StringBuilder stringBuilder = new StringBuilder();
+                        for (int k = j; k < i; k++) {
+                            stringBuilder.append(subs[k]);
+                            stringBuilder.append(".");
+                        }
+                        stringBuilder.append(subs[i]);
+                        String sub = stringBuilder.toString();
+                        if (checkSub(host, sub))
+                            addToInsertMap(host, sub, SUB);
+                    }
+
+                }
+                List<IParameter> parameters = requestInfo.getParameters();
+                for (IParameter parameter : parameters) {
+                    if (parameter.getType() != 2) {
+                        String parameterName = parameter.getName();
+
+                        if (checkParameter(host, parameterName))
+                            addToInsertMap(host, parameterName, PARAMETER);
+                    }
                 }
 
-            }
-            List<IParameter> parameters = requestInfo.getParameters();
-            for (IParameter parameter : parameters) {
-                if (parameter.getType() != 2) {
-                    String parameterName = parameter.getName();
 
-                    if (checkParameter(host, parameterName))
-                        addToInsertMap(host, parameterName, PARAMETER);
+            }
+
+            callbacks.printOutput("add data to insert queue finish");
+
+            HostFileMapDao hostFileMapDao = new HostFileMapDao();
+            HostFullPathMapDao hostFullPathMapDao = new HostFullPathMapDao();
+            HostPathMapDao hostPathMapDao = new HostPathMapDao();
+            HostDirMapDao hostDirMapDao = new HostDirMapDao();
+            HostParameterMapDao hostParameterMapDao = new HostParameterMapDao();
+            HostSubDao hostSubDao = new HostSubDao();
+
+            Set<String> hostSet = insertHostValueMap.keySet();
+
+            for (String host : hostSet) {
+                try {
+                    HashSet<String> fullPathSet = getInsertHashSet(host, FULL_PATH);
+                    if (fullPathSet != null)
+                        hostFullPathMapDao.insertIgnoreHostFullPath(host, fullPathSet);
+
+                    HashSet<String> pathSet = getInsertHashSet(host, PATH);
+                    if (pathSet != null)
+                        hostPathMapDao.insertIgnoreHostPath(host, pathSet);
+
+                    HashSet<String> dirSet = getInsertHashSet(host, DIR);
+                    if (dirSet != null)
+                        hostDirMapDao.insertIgnoreHostDir(host, dirSet);
+
+                    HashSet<String> fileSet = getInsertHashSet(host, FILE);
+                    if (fileSet != null)
+                        hostFileMapDao.insertIgnoreHostFile(host, fileSet);
+
+                    HashSet<String> parameterSet = getInsertHashSet(host, PARAMETER);
+                    if (parameterSet != null)
+                        hostParameterMapDao.insertIgnoreHostParameter(host, parameterSet);
+
+                    HashSet<String> subSet = getInsertHashSet(host, SUB);
+                    if (subSet != null)
+                        hostSubDao.insertIgnoreHostSub(host, subSet);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    callbacks.printOutput(e.toString());
+                    dataCollectorGui.appendOutput(e.toString());
                 }
             }
 
+            // clear insert queue
+            cleanInsertMap();
 
+            callbacks.printOutput("export finish!");
+            dataCollectorGui.appendOutput("export finish!");
+        } else {
+            callbacks.printOutput("database connect fail! please check you mysql config !");
+            dataCollectorGui.appendOutput("database connect fail! please check you mysql config !");
         }
-
-        callbacks.printOutput("add data to insert queue finish");
-
-        HostFileMapDao hostFileMapDao = new HostFileMapDao();
-        HostFullPathMapDao hostFullPathMapDao = new HostFullPathMapDao();
-        HostPathMapDao hostPathMapDao = new HostPathMapDao();
-        HostDirMapDao hostDirMapDao = new HostDirMapDao();
-        HostParameterMapDao hostParameterMapDao = new HostParameterMapDao();
-        HostSubDao hostSubDao = new HostSubDao();
-
-        Set<String> hostSet = insertHostValueMap.keySet();
-
-        for (String host : hostSet) {
-            try {
-                HashSet<String> fullPathSet = getInsertHashSet(host, FULL_PATH);
-                if (fullPathSet != null)
-                    hostFullPathMapDao.insertIgnoreHostFullPath(host, fullPathSet);
-
-                HashSet<String> pathSet = getInsertHashSet(host, PATH);
-                if (pathSet != null)
-                    hostPathMapDao.insertIgnoreHostPath(host, pathSet);
-
-                HashSet<String> dirSet = getInsertHashSet(host, DIR);
-                if (dirSet != null)
-                    hostDirMapDao.insertIgnoreHostDir(host, dirSet);
-
-                HashSet<String> fileSet = getInsertHashSet(host, FILE);
-                if (fileSet != null)
-                    hostFileMapDao.insertIgnoreHostFile(host, fileSet);
-
-                HashSet<String> parameterSet = getInsertHashSet(host, PARAMETER);
-                if (parameterSet != null)
-                    hostParameterMapDao.insertIgnoreHostParameter(host, parameterSet);
-
-                HashSet<String> subSet = getInsertHashSet(host, SUB);
-                if (subSet != null)
-                    hostSubDao.insertIgnoreHostSub(host, subSet);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                callbacks.printOutput(e.toString());
-                dataCollectorGui.appendOutput(e.toString());
-            }
-        }
-
-        // clear insert queue
-        cleanInsertMap();
-
-        callbacks.printOutput("export finish!");
-        dataCollectorGui.appendOutput("export finish!");
     }
-
 
 }

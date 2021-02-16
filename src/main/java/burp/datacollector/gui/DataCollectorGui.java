@@ -63,7 +63,12 @@ public class DataCollectorGui {
         connectionTestButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                DatabaseUtil.getInstance().connectTest(DataCollectorGui.this, burpExtender.getCallbacks(), getMysqlHost(), getMysqlPort(), getMysqlUser(), getMysqlPassword());
+                new Thread() {
+                    @Override
+                    public void run() {
+                        DatabaseUtil.getInstance().connectTest(DataCollectorGui.this, burpExtender.getCallbacks(), getMysqlHost(), getMysqlPort(), getMysqlUser(), getMysqlPassword());
+                    }
+                }.start();
             }
         });
         exportDataToDatabaseButton.addActionListener(new ActionListener() {
